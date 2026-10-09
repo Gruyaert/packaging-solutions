@@ -1,14 +1,14 @@
 # Ontwikkelhandleiding
 
-Versie 0.1. **Bevestigd**: React 19/TypeScript/Vite, bestaande dependencyset ongewijzigd. **Voorlopig voorstel**: onderstaande fasering. **Open**: opslag, bronmapping en publicatievoorwaarden.
+Versie 0.2. **Bevestigd**: React 19/TypeScript/Vite en ExcelJS 4.4.0 voor lokale inspectie. **Voorlopig voorstel**: fasering. **Open**: opslag, mapping en publicatievoorwaarden.
 
 ## Omgeving en scripts
-Dyad verzorgt installatie via de bestaande package-/lockfile en start de Vite-preview; gewone edits gebruiken hot reload. package.json definieert dev (Vite), build (productie Vite), build:dev, preview en lint (ESLint). TypeScriptcontrole is apart beschikbaar in de ontwikkelomgeving; er is geen npm-testscript of testframework toegevoegd. Geen nieuwe runtime-XLSX-library, server of database. Gebruik de beschikbare verificatie-acties, niet een tweede dev-server.
+Dyad verzorgt dependency-installatie en Vite-preview; gewone edits gebruiken hot reload. package.json definieert dev, build, build:dev, preview en lint. Geen npm-testscript/testframework toegevoegd. ExcelJS 4.4.0 geïnstalleerd via dependencybeheer; browserondersteuning maakt server/DB onnodig voor inspectie. ExcelJS wordt dynamisch geladen bij bestandskeuze, niet in de hoofdweergave. Typecheck/build/lint alleen claimen bij daadwerkelijke uitvoer; deze turn biedt geen uitvoertool voor die checks.
 
 ## Modules en wijzigingen
-Routes blijven in src/App.tsx (ongewijzigd). Index gebruikt AppShell en ContractPhaseOverview. Centrale themawaarden in globals.css zijn aangepast voor donkerblauwe tekst en teal/blauwe accenten; geen gradients. Domein-, application-, infrastructure- en visualizationmappen bevatten alleen verantwoordelijkheidsdocumentatie; geen lege engine/repositoryimplementaties. Zie [architectuur](ARCHITECTURE.md).
+Routes blijven in src/App.tsx. Index gebruikt AppShell, ContractPhaseOverview en ExcelInspector. Infrastructure bevat nu inspect-workbook.ts; domain/application/visualization behouden alleen module-README's. Geen engine/repositorylaag. UI-toestand alleen React-geheugen; File/ArrayBuffer niet naar public, opslag of API. globals.css/config ongewijzigd in 0.2. Zie [architectuur](ARCHITECTURE.md) en [inspectiecontract](IMPORT_EXPORT.md).
 
-Checklist per wijziging: bron/status vastleggen; veldcontract bijwerken; R-regel/U-flow/T-test koppelen; Q-blokkades bijwerken; beslissing motiveren; changelog inclusief datum/impact/risico/echte teststatus; links controleren; typecheck en waar relevant build. Verander geen accepted hash-snapshot; voortgang alleen in werkplan.
+Checklist: bron/status; relevante contracten; R/U/T-koppelingen; Q-blokkades; besluiten/changelog met echte teststatus; links; typecheck/build indien uitvoerbaar. Accepted hash-snapshots niet wijzigen, voortgang alleen in werkplan. Lokale parsing is geen gevalideerde masterimport.
 
 ## GitHub-workflow
 Gewenste bron: https://github.com/Gruyaert/packaging-solutions. Geobserveerd: lokale main, aanvankelijk schoon, HEAD 9435ceb62ca691d942610c9838c7d439d850f8f2. Geen remote/rechten verifieerbaar met huidige tools (Q11). Voor publicatie: remote vaststellen, rechten controleren, gewenste doelbranch/PR en beschermingsregels bevestigen, Q10 voor bronbytes oplossen. Geen automatische push of PR. Dyad beheert de lokale commit aan het einde van de wijziging; deze sessie maakt geen eigen commits. Hash pas na verifieerbaar commitresultaat rapporteren. Lokaal werk is geen GitHub-publicatie.

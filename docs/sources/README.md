@@ -9,7 +9,9 @@ Versie 0.1. **Bevestigd**: onderstaande namen uit attachments-manifest en daadwe
 
 Herkomst B2: .dyad/media/attachments-manifest.json; MIME application/vnd.openxmlformats-officedocument.spreadsheetml.sheet. Geen inhoudelijke afleiding uit bestandsnaam. De opgeslagen namen zijn niet onafhankelijk geverifieerd als SHA-256.
 
-## Bewaarbeleid en blokkades
-Oorspronkelijke bestanden niet gewijzigd, niet naar public gekopieerd en geen downloadroute toegevoegd. Ook nog niet naar docs/sources gekopieerd: Q10 (opnametoestemming en gevoelige inhoud) open. Er is dus geen bytekopie die als gecontroleerd mag worden aangemerkt. Q12: checksumtool ontbreekt. Q01: XLSX-parser ontbreekt; werkbladen/headers/types/formules/cache/hidden tabs/lege rijen/duplicaten/keys/eenheden allemaal onbekend. Vraag een werkbladextract plus metadata; CSV alleen volstaat niet voor formules en hidden-state.
+## Bewaarbeleid en actuele inspectiestatus (0.2)
+Oorspronkelijke bestanden niet gewijzigd, niet naar public gekopieerd en geen bron-downloadroute toegevoegd. Ook niet naar docs/sources gekopieerd: Q10 (opnametoestemming en gevoelige inhoud) open. Geen bytekopie gecontroleerd.
 
-Na toestemming: ongewijzigde bytes kopiëren, onafhankelijk SHA-256 bron en kopie vergelijken, register bijwerken; geen openbaar downloadpad. Zie [import/export](../IMPORT_EXPORT.md), [vragen](../OPEN_QUESTIONS.md) en [index](../README.md).
+Lokale XLSX-inspectie via ExcelJS en SHA-256 via Web Crypto zijn nu beschikbaar in de app. Selecteer de oorspronkelijke bestanden en download desgewenst het volledige JSON-bronrapport. Geen serverupload of repositoryopname. De daadwerkelijke werkbladen/kolommen/checksums van S01/S02 zijn nog niet door de assistent gelezen of vastgelegd; bovenstaande registerwaarden blijven daarom open. Technische inspectie in een browsersessie is niet automatisch een contractwijziging.
+
+Na beoordeling: register aanvullen met echte bevindingen. Na toestemming: ongewijzigde bytes kopiëren, onafhankelijk SHA-256 bron en kopie vergelijken; geen openbaar downloadpad. Zie [import/export](../IMPORT_EXPORT.md), [vragen](../OPEN_QUESTIONS.md) en [index](../README.md).

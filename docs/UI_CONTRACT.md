@@ -2,8 +2,10 @@
 
 Versie 0.1. Bron B1: goedgekeurd plan. **Bevestigd**: functionele vereisten. **Voorlopig voorstel**: huidige vormgeving en toekomstige schermindeling. **Open**: Zite-screenshots, routes en exacte tabellen (Q02). Alleen / is de startpagina; geen nieuwe functionele routes.
 
-## Huidig skelet (voorlopig voorstel, geïmplementeerd in deze fase)
-Nederlandstalige titel Verpakkingsoptimalisatie, expliciete melding Contractfase — optimalisatie nog niet beschikbaar. Bronstatus onderscheidt ontvangen/metadata gecontroleerd van inhoud niet gecontroleerd. Geen producten, dozen, solutions, bereken-, import-, export- of opslagacties. Afgeronde witte vlakken, centrale blauwe/teal variabelen, donkerblauwe tekst; responsive Tailwind en aangepaste shadcn Cards/Badges. Illustratieve verpakking-iconografie is geen placementvisualisatie. Geen gereconstrueerde Zite-interface.
+## Huidig skelet en lokale inspectie (uitbreiding 0.2)
+Nederlandstalige titel en melding Contractfase — optimalisatie nog niet beschikbaar blijven. Geen producten/solutions/berekeningen, productie-import of operationele opslag/exports. Stijl voorlopig: afgeronde vlakken, centrale blauw/teal tokens, donkerblauwe tekst, Tailwind en aangepaste shadcn. Geen gereconstrueerde Zite-interface.
+
+U10 (bevestigd als nieuwe implementatie, geen Zite-reconstructie): Excelbestanden inspecteren, bestand kiezen, alle werkbladen inclusief hidden/veryHidden openen, koprij aanpassen, keykolommen kiezen, pagineren, bronrapport downloaden en sessie wissen. Validatie: XLSX/extensie, 5 MB en structuurlimieten. Formules alleen tonen met cache, niet uitvoeren. Flow: browser-File → read-only parser → lokale React-state → optionele JSON-download. Geen bronmutatie of persistentie. Bronregisterstatus staat los van lokale sessie; mapping/eenheden blijven Q01/Q05. Rapport bevat alle broncellen, maar geen interactieve keykeuzes. Zie [inspectiecontract](IMPORT_EXPORT.md) en [gebruik](USER_MANUAL.md); tests I01–I08.
 
 ## Toekomstige functionele inventaris (niet beschikbaar)
 | ID / gebied | Bevestigde velden en acties / regel | Validatie en toegestane wijziging | Voorgestelde datastroom | Open details / bewijs |

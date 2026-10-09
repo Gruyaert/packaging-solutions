@@ -41,14 +41,14 @@ export function ContractPhaseOverview() {
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-primary"><LockKeyhole aria-hidden="true" className="size-5" /></span>
         <div>
           <h2 className="font-semibold text-accent-foreground">Contractfase — optimalisatie nog niet beschikbaar</h2>
-          <p className="mt-1 text-sm leading-relaxed text-accent-foreground">Dit skelet toont uitsluitend bron- en contractstatus. Er is geen engine, productie-import, database, CERM-koppeling, solutionbewerking, 3D-renderer of export.</p>
+          <p className="mt-1 text-sm leading-relaxed text-accent-foreground">Lokale Excel-inspectie is beschikbaar. Er is nog geen engine, productie-import, database, CERM-koppeling, solutionbewerking, 3D-renderer of productie-export.</p>
         </div>
       </section>
 
       <section aria-labelledby="sources-title">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="sources-title" className="text-xl font-semibold tracking-tight">Ontvangen bronbestanden</h2>
-          <p className="text-sm text-muted-foreground">2 ontvangen · 0 inhoudelijk gecontroleerd</p>
+          <h2 id="sources-title" className="text-xl font-semibold tracking-tight">Ontvangen bronbestanden · bronregister</h2>
+          <p className="text-sm text-muted-foreground">2 ontvangen · inhoudsanalyse nog niet vastgelegd</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {sources.map((source) => (
@@ -67,7 +67,7 @@ export function ContractPhaseOverview() {
             </Card>
           ))}
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Aanwezigheid en bestandsgrootte gecontroleerd. Werkbladen en data zijn niet gelezen; bronbestanden worden niet openbaar aangeboden.</p>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Dit is de vastgelegde bronstatus, niet de status van je lokale inspectiesessie hierboven. Inspectieresultaten blijven in je browser totdat je het rapport bewust deelt. Bronbestanden worden niet openbaar aangeboden.</p>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">

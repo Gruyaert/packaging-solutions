@@ -33,4 +33,18 @@ A05: skelet zonder schijnacties/fictieve data; responsive klassen inspecteren; m
 A06: TypeScript en productiebuild uitvoeren; ESLint alleen geslaagd noemen bij echte run.
 A07: code+docs dezelfde wijzigingsset; commit/push/PR uitsluitend claimen na bewijs. Q11 blokkeert publicatie.
 
+## Inspectieacceptatie 0.2 — definities, nog niet uitgevoerd
+| ID | UI / regel | Te controleren |
+|---|---|---|
+| I01 | U10 / Q01 | Beide originele XLSX lokaal selecteren; exacte werkbladnamen/zichtbaarheid en bronwaarden vergelijken met Excel |
+| I02 | U10 / Q01 | Koprij wijzigen; geen automatische domeinmapping; 20 niet-lege rijen/pagina; lege rijen en merges correct |
+| I03 | U10 / Q01 | Twee geselecteerde keykolommen: exacte duplicaatgroepen/ontbrekende keys; formulekeys niet toetsbaar; string 1 en number 1 onderscheiden |
+| I04 | U10 / Q01 | Formules/shared formulas/cached values tonen, geen berekening of hyperlinkuitvoering |
+| I05 | U10 / Q12 | Rapport-SHA-256 onafhankelijk vergelijken met originele bytes; zonder Web Crypto expliciet onbekend |
+| I06 | U10 / R14–R15 | Geen file-data netwerkverzending, persistentie, mastermutatie of CERM-write; wissen/herladen verwijdert sessiestate |
+| I07 | U10 | Foute extensie, corrupt/beveiligd bestand, te groot/structuurlimiet: duidelijke fout, geen gedeeltelijk werkboekrapport; andere geselecteerde bestanden blijven afzonderlijk rapporteerbaar |
+| I08 | U10 | JSON-download bevat alle uitgelezen cellen, geen pagingtruncatie; privacywaarschuwing; nieuwe selectie vervangt vorige resultaten |
+
+Typecheck/build/lint en browsercontrole van 0.2 zijn niet uitgevoerd in deze turn: geen beschikbare uitvoer-/browsertool. Broncode en ExcelJS-types zijn handmatig gelezen; dit vervangt geen runtimeverificatie. Eerdere geslaagde 0.1-checks gelden niet automatisch voor 0.2.
+
 Werkelijke verificatiestatus staat in [changelog](CHANGELOG.md), niet in bovenstaande toekomstige definities. Vervolgacceptatie per fase in [ontwikkelhandleiding](DEVELOPER_MANUAL.md). Zie [regels](ALGORITHM_CONTRACT.md), [vragen](OPEN_QUESTIONS.md) en [index](README.md).

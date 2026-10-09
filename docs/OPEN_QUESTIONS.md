@@ -18,7 +18,9 @@ Versie 0.1. Elke rij heeft status **open**. Geen ontbrekende regel wordt vervang
 | Q12 | Onafhankelijke SHA-256 en integriteitscontrole van bronnen? | herkomst/integriteit | checksumtool op oorspronkelijke bytes | verified hash/bytevergelijking; namen zijn geen bewijs |
 | Q13 | Mobiel/desktop/a11y en lint feitelijk uitgevoerd? | acceptatie skelet | browsercontrole en ESLint-run | volledige faseacceptatie; build/typecheck niet voldoende |
 
-## Blokkades van deze uitvoeringsomgeving
-XLSX/ZIP-parser, cryptografisch checksummiddel, ESLint-executie en Git remote/push-tools zijn niet beschikbaar. Geen runtime-XLSX-dependency toegevoegd. CSV alleen geeft geen verborgen tabs/formules: lever zo nodig ook werkbladnamen, celtypen, formule-/cache- en verborgen-tabmetadata. Bronnen blijven ongewijzigd op ontvangen locatie totdat Q10 is opgelost.
+## Beschikbare voorziening en resterende blokkades (0.2)
+De parserblokkade is pragmatisch aangepakt: lokale browserinspectie via ExcelJS 4.4.0 en SHA-256 via Web Crypto indien beschikbaar. De originele XLSX-bestanden kunnen rechtstreeks worden geselecteerd; geen CSV-conversie vereist. Q01/Q12 blijven open voor de twee projectbronnen totdat echte resultaten/checksums worden gedeeld en beoordeeld; implementatie is geen bewijs van inhoudelijke controle.
+
+Deze chat heeft geen browserbesturing, command-uitvoering voor tests of Git remote/push-tools. De preview heeft geen directe toegang tot chatbijlagen. Download het lokale JSON-inspectierapport en deel het bewust voor inhoudelijke analyse, met aandacht voor vertrouwelijke gegevens. Bronnen blijven ongewijzigd op ontvangen locatie totdat Q10 is opgelost. Zie [inspectiecontract](IMPORT_EXPORT.md).
 
 Zie [algoritme](ALGORITHM_CONTRACT.md), [testplan](TEST_PLAN.md), [besluiten](DECISION_LOG.md) en [index](README.md).
