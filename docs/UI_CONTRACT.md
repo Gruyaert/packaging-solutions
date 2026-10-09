@@ -1,11 +1,16 @@
 # UI-contract
 
-Versie 0.4. De gevraagde beheerworkflow is geïmplementeerd met Supabase. Fysiek snapshotcontract blijft 0.3. Vormgeving en heuristische keuzes zijn geen reconstructieclaim van Zite.
+Versie 0.5. Beheer is beschikbaar in een private Supabase-werkruimte en een afzonderlijke lokale testwerkruimte. Fysiek snapshotcontract blijft 0.3. Vormgeving en heuristische keuzes zijn geen reconstructieclaim van Zite.
+
+## Lokale testwerkruimte
+Publieke `/test` met knop **Testen zonder account** op login en **Lokaal testen** voor ingelogde gebruikers. Lege in-memory records, geen fictieve bronmappings/resultaten. Dezelfde tabs en beheeracties via een aparte lokale provider; geen packaging-query/RPC, auth-bypass, anon-account, browserpersistente testdata of automatische cloud-overdracht.
+
+Header, banner, bronkeuzes, oplossingopslag, importmelding, export en debug benoemen de lokale modus. Herladen/verlaten wist testdata; exports blijven als download bestaan. Header-exit vraagt bevestiging. Local snapshot/context/mode/lineage-checks en active-pointerflow zijn functioneel, maar vervangen geen echte RLS/Auth-/serveracceptatie.
 
 ## Navigatie en layout
 Acht tabs: **Verpakking zoeken**, **Omdoos op maat**, **Palletisatie**, **Omdozenbeheer**, **Shapes masterdata**, **Packaging Definitions**, **Solutions**, **Rapporten / Exports**. **Debug / Performance** is een afzonderlijke, discrete actie. Compacte desktoplayout, responsive grids en afgebakende tabelscroll; geen bedoelde horizontale page-scroll. Tabellen hebben filters per kolom en pagina's van 25 records. Productvelden blijven uitgelijnd met meerregelige labels. Rotaties/maxima, speling/limieten en palletoverhang zijn inklapbaar.
 
-Routes blijven in `src/App.tsx`: `/` beschermd, `/login`, `/auth/callback` en `/reset-password` publiek. Email/password via Supabase Auth UI; geen sociale providers of profielvelden. Privéwerkruimte per gebruiker, geen gedeelde bedrijfsruimte of rollenmodel. Afmelden wist querycache en brengt de gebruiker naar login. Herstel bereikt eerst het wachtwoordscherm.
+Routes blijven in `src/App.tsx`: `/` beschermd, `/test`, `/login`, `/auth/callback` en `/reset-password` publiek. Email/password via Supabase Auth UI; geen sociale providers of profielvelden. Privéwerkruimte per gebruiker, geen gedeelde bedrijfsruimte of rollenmodel. Afmelden wist querycache en brengt de gebruiker naar login. Herstel bereikt eerst het wachtwoordscherm.
 
 | Gebied | Functionele acties | Grenzen |
 |---|---|---|

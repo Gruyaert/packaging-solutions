@@ -1,9 +1,13 @@
 # Verpakkingsoptimalisatie
 
-Werkruimtefase 0.4: private Supabase-opslag en functionele tabbed management rond de pure TypeScript packing-engine. Geen fictieve productmappings/resultaten of globale optimaliteitsclaim.
+Werkruimtefase 0.5: private Supabase-opslag én lokale testmodus zonder account rond de pure TypeScript packing-engine. Geen fictieve productmappings/resultaten of globale optimaliteitsclaim.
+
+## Testen zonder account
+Klik op **Testen zonder account** op login of open `/test`. Vanuit je private workspace gebruik je **Lokaal testen**. Berekeningen, eigen Excelmapping/import en beheer-/solution-/palletacties gebruiken uitsluitend een aparte lege memory-workspace, geen Supabase-packagingdata. Herladen/verlaten wist alle testrecords; downloads blijven lokaal bestaan. Geen automatische cloudtransfer of workspace-herstelimport. Lokale regressietests toegevoegd; uitvoering/typecheck/build/browseracceptatie van 0.5 nog open (zie changelog).
 
 ## Beschikbaar
 - Email/password, publiek callback/reset en beschermde privéwerkruimte per gebruiker.
+- Publieke lokale testwerkruimte met expliciete opslag-/verlieswaarschuwing en dezelfde beheerflows.
 - Verpakking zoeken, Omdoos op maat, Palletisatie, Omdozenbeheer, Shapes masterdata, Packaging Definitions, Solutions, Rapporten / Exports; discrete Debug / Performance.
 - Maximaal vijf producten, zes rotaties, g/kg, productmaxima; zoek-time totaalgewicht-/lagenlimieten, aparte exactfilter/ranking.
 - Filterbare tabellen, compacte uitgelijnde invoer, inklapbare advanced options en contained table overflow.

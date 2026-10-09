@@ -1,5 +1,15 @@
 # Changelog
 
+## Lokale testwerkruimte zonder account (0.5)
+
+Wijziging: publieke `/test`, login-knop en header-entry/exit, duidelijke tijdelijke-opslagbanner, aparte memory-store/provider met lege eigen records. Cartonbeheer, expliciete shape/carton-upsert met importhistory, definities, validated immutable solutions/variants/activation/archive en echte palletopslag werken zonder account. Dezelfde UI en engine, lokale bron-/save-/export-/debuglabels en storage-markering op workspace-export. Zeven local-workspace-regressietests en passende Node-testconfig toegevoegd; relevante handleiding/contract/architectuur/testplan bijgewerkt.
+
+Waarom: gebruiker wil zonder sign-in testen en bevestigde de lokale-testmodus. Geen demo-masterdata, geraden mapping of gefingeerde berekeningen toegevoegd.
+
+Impact/privacy: uitsluitend browsergeheugen voor testrecords; verlaten/herladen wist data, downloads kunnen bewust lokaal bewaard worden. Geen packaging-API/RPC, browserpersistente testrecords, anon-login, cloudfallback of automatische transfer. Echte hoofdroute/auth/RLS/grants ongewijzigd. Lokale validators helpen flows testen maar vervangen geen echte DB/Auth-acceptatie.
+
+Verificatie: relevante broncode, routes, contextinterface en isolatie handmatig gelezen; regressietests geschreven maar niet uitgevoerd. Typecheck/build/lint/browser in deze ronde niet uitgevoerd (geen beschikbare uitvoer-/browsertool). Geen eerdere succesvolle 0.4-checks als bewijs voor 0.5 hergebruikt. Geen serverrestart nodig voor gewone source-edits, geen nieuwe dependencies of databasewijzigingen.
+
 ## Werkruimte / Supabase UI (0.4)
 
 Wijziging: publishable-key Supabase-client, Auth UI/sessiebeheer/private routes/callback/reset; zes private tabellen met RLS/minimale grants, master-sync/history en active-solution RPCs, immutable owner/snapshot/context/mode/lineageguards. Acht functionele tabs en discreet debug; compact input/advanced-controls/filtertabellen; carton CRUD/status, readonly shape-import, scoped definitions en real saved solution workflows. Pallet databasebron via filtertable, gekozen patroon/source/settings/result-opslag en JSON; veilige HTML-laagrapporten en volledige eigen werkruimte-export. Search-time totaalproductgewicht/global-Z-lagenlimieten en regressietests. Relevante contracten/handleidingen bijgewerkt.

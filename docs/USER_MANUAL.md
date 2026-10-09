@@ -1,6 +1,15 @@
 # Gebruikershandleiding
 
-Versie 0.4. Supabase bewaart eigen masterrecords en resultaten; het rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
+Versie 0.5. Met account bewaart Supabase eigen masterrecords en resultaten; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
+
+## Testen zonder account
+Klik op **Testen zonder account** boven het aanmeldformulier, of open `/test`. Ben je al aangemeld, gebruik **Lokaal testen** in de header. De testwerkruimte begint leeg; er zijn geen verzonnen producten, masterrecords of voorbeeldresultaten.
+
+Gebruik eigen handmatige invoer of Excelbestanden om dezelfde berekeningen en beheerflows te testen: omdozen, gecontroleerde shapes-import, definities, solutionopslag/varianten/activeren/archiveren en palletresultaten. De lokale provider valideert invoer en bewaakt snapshot/context/modus; dit is geen test van echte databaseautorisatie of servertransacties.
+
+**Alles blijft uitsluitend in het browsergeheugen.** Ook als je al ingelogd bent, worden geen Supabase-packagingrecords gelezen of gewijzigd. Er is geen anonieme aanmelding, localStorage/IndexedDB voor testrecords of automatische overdracht naar je privéwerkruimte. Herladen, sluiten of verlaten wist de testwerkruimte. Gewone tabwissels binnen de app behouden de lokale records.
+
+Wil je resultaten bewaren, download solution-JSON/HTML, pallet-JSON of de lokale werkruimte-JSON via Rapporten / Exports voordat je vertrekt. Gedownloade bestanden blijven op je computer; volledige werkruimte-JSON heeft geen automatische herstelimport. Verlaten via de header vraagt bevestiging. Browser Terug/herladen kan de testdata eveneens wissen.
 
 ## Aanmelden en werkruimte
 Meld je aan of maak een account via email/password. Bevestig je email indien Supabase dit vereist. Gebruik Wachtwoord vergeten om een herstelmail aan te vragen; de link opent een wachtwoord-update, niet de gewone startpagina. De app gebruikt een callback op de huidige app-origin. Voor een nieuw deployment moeten de absolute callback/reset-URLs in Supabase Redirect URLs zijn toegestaan.

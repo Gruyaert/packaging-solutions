@@ -1,8 +1,21 @@
 # Testplan
 
-Versie 0.4. B4 (huidige gebruikersprompt) is bron van onderstaande golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.5. B4-packingfeedback is bron van de golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases en lokale testmodus. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
 
-## Actuele 0.4-verificatie en nieuwe acceptatie
+## Lokale testmodus 0.5
+[local-packaging-workspace.test.ts](../src/application/local-packaging-workspace.test.ts) bevat zeven uitvoerbare regressies: lege/gescheiden nieuwe instances, carton CRUD/duplicate keys, volledig gevalideerde import/upsert/history zonder deletes, shape-masterreferentie, cloned immutable snapshots/lineage/modus/context, actief-pointer/archive en immutable echt palletresultaat. Vitest-config bevat nu application-tests en source-alias. Tests zijn geschreven, niet uitgevoerd.
+
+Browseracceptatie nog uit te voeren:
+- `/test` en login-knop werken zonder sessie; beschermde `/` blijft beschermd.
+- Alle beheer-/berekenacties gebruiken uitsluitend testrecords, ook met bestaande login; geen packaging REST/RPC-requests bij lokale acties.
+- Eigen Excelmapping-preview/import/historiek werkt lokaal; fouten geven geen gedeeltelijke import.
+- Tabwissels behouden records; herladen, sluiten en opnieuw `/test` openen start leeg; header-exit vraagt bevestiging en draagt niets over.
+- HTML/solution/pallet/workspace downloads bevatten dezelfde eigen testdata; workspace-export storage=local; geen cloudrecords of token/email lek in lokale UI/export.
+- Dezelfde physical/mode/variant/active/archive checks, geen echte RLS/Auth-acceptatieclaim door lokale simulatietests.
+
+Deze ronde: source/imports/routes/isolatie handmatig gecontroleerd. Typecheck, build, Vitest, lint en interactieve browseracceptatie niet uitgevoerd omdat daarvoor geen uitvoeringstool beschikbaar is. Eerdere 0.4-checks hieronder zijn historische resultaten, geen bewijs voor deze uitbreiding.
+
+## Historische 0.4-verificatie en acceptatie
 - Projectbrede TypeScriptcheck: uitgevoerd, geslaagd na correctie van de ExcelJS cell.col-conversie.
 - Database audit: alle zes tabellen RLS=true; anon SELECT=false, geen client DELETE; shapes/imports geen directe client INSERT/UPDATE, pallets INSERT-only; own-user policies en service-role grants aanwezig.
 - Productiebuild: zie actuele changelog; unit/lint/browseracceptatie niet uitgevoerd.

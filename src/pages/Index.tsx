@@ -16,7 +16,7 @@ import type { Solution } from "@/domain/packing/types";
 
 const tabs = [ ["search", "Verpakking zoeken"], ["custom", "Omdoos op maat"], ["pallet", "Palletisatie"], ["cartons", "Omdozenbeheer"], ["shapes", "Shapes masterdata"], ["definitions", "Packaging Definitions"], ["solutions", "Solutions"], ["reports", "Rapporten / Exports"] ];
 export default function Index() {
-  const { records, loading, error, refresh, busy } = usePackagingData();
+  const { records, loading, error, refresh, busy, storage } = usePackagingData();
   const [tab, setTab] = useState("search"), [mode, setMode] = useState<"search" | "custom">("search");
   const [shape, setShape] = useState<ShapeRecord>(), [definitionId, setDefinitionId] = useState<string>(), [initial, setInitial] = useState<SolutionRecord>(), [solutionId, setSolutionId] = useState<string>(), [palletSolution, setPalletSolution] = useState<Solution>();
   const navigate = (value: string) => { setTab(value); if (value === "search" || value === "custom") setMode(value); };
@@ -33,7 +33,7 @@ export default function Index() {
       {tab === "definitions" && <TabsContent value="definitions" className="min-w-0"><DefinitionManagement seed={shape} onCalculate={calculate} onSolution={openSolution} /></TabsContent>}
       {tab === "solutions" && <TabsContent value="solutions" className="min-w-0"><SolutionManagement key={solutionId ?? "all"} initialId={solutionId} onRecalculate={recalculate} onPalletize={palletize} /></TabsContent>}
       {tab === "reports" && <TabsContent value="reports" className="min-w-0"><ReportsPanel onSolution={openSolution} /></TabsContent>}
-      {tab === "debug" && <section className="space-y-5"><h1 className="text-xl font-semibold">Debug / Performance</h1><p className="text-xs text-muted-foreground">Geen geheime sleutels of sessietokens in deze weergave. Zoekpogingen en truncatie staan bij de berekende resultaten.</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{Object.entries(records).map(([kind, rows]) => <div key={kind} className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">{kind}</p><p className="mt-1 text-xl font-semibold">{rows.length}</p></div>)}</div><Button variant="outline" className="rounded-xl" disabled={busy} onClick={() => refresh()}>Database opnieuw laden</Button><ExcelInspector /></section>}
+      {tab === "debug" && <section className="space-y-5"><h1 className="text-xl font-semibold">Debug / Performance</h1><p className="text-xs text-muted-foreground">Geen geheime sleutels of sessietokens in deze weergave. Zoekpogingen en truncatie staan bij de berekende resultaten.</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{Object.entries(records).map(([kind, rows]) => <div key={kind} className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">{kind}</p><p className="mt-1 text-xl font-semibold">{rows.length}</p></div>)}</div><Button variant="outline" className="rounded-xl" disabled={busy} onClick={() => refresh()}>{storage === "local" ? "Lokale records controleren" : "Database opnieuw laden"}</Button><ExcelInspector /></section>}
     </>}
   </Tabs></AppShell>;
 }
