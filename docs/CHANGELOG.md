@@ -1,5 +1,24 @@
 # Changelog
 
+## Werkruimte / Supabase UI (0.4)
+
+Wijziging: publishable-key Supabase-client, Auth UI/sessiebeheer/private routes/callback/reset; zes private tabellen met RLS/minimale grants, master-sync/history en active-solution RPCs, immutable owner/snapshot/context/mode/lineageguards. Acht functionele tabs en discreet debug; compact input/advanced-controls/filtertabellen; carton CRUD/status, readonly shape-import, scoped definitions en real saved solution workflows. Pallet databasebron via filtertable, gekozen patroon/source/settings/result-opslag en JSON; veilige HTML-laagrapporten en volledige eigen werkruimte-export. Search-time totaalproductgewicht/global-Z-lagenlimieten en regressietests. Relevante contracten/handleidingen bijgewerkt.
+
+Waarom: gebruiker bevestigde Supabase-integratie en vroeg door te werken. Eerste schema-uitvoering geweigerd; gebruiker gaf “Try again?”, daarna succesvol uitgevoerd. Geen bestaande tabellen blind vervangen. Supabase default privileges expliciet ingetrokken vóór definitieve least-privilege audit.
+
+Impact: echte private werkruimte per login; originele XLSX blijft lokaal, alleen expliciet bevestigde records/historiek worden opgeslagen. Geen fictieve mastermapping of resultaten. Snapshot-envelope blijft fysiek 0.3; workspace-export 0.4. Rekenen blijft lokale worker. Naam/notities/status mutable; fysieke edits nieuwe variant. STOCK/PERSO server-side geïsoleerd. Geen CERM/publicatie/teams/automatische override-resolver/vrije placement-editor/3D/compressie.
+
+### Werkelijke verificatie 0.4
+- Dependencybeheer: Supabase-client en officiële Auth UI-packages succesvol toegevoegd/ververst.
+- SQL: tabellen, guards/RPCs/grants succesvol uitgevoerd; effectieve privilege-audit daarna geslaagd: RLS alle zes true, anon SELECT alle zes false, geen client DELETE; shapes/imports direct write=false, pallets INSERT-only.
+- TypeScript: projectbreed uitgevoerd, **geslaagd**; gerelateerde bestaande ExcelJS string→number assertion vervangen door echte Number-conversie.
+- Productiebuild: uitgevoerd, **geslaagd** (Vite 8.0.10). Waarschuwingen: bestaande deprecated esbuild/react-swc-optie, verouderde Browserslist-data en grote chunks (app ~801 kB, lazy ExcelJS ~930 kB minified). Geen configuratie/dependencyupgrade buiten scope toegevoegd.
+- Relatieve links: 12 hoofddocumenten gecontroleerd, geen ontbrekende targets. Beschikbare browser-consolefouten: geen gevonden; dit is geen interactieve browseracceptatie.
+- Golden/regressietests inclusief nieuwe search-limits tests: geschreven, **niet uitgevoerd** (geen beschikbare test-runneractie).
+- ESLint, browser/a11y, email/callback/recovery/twee-accountintegratie en echte XLSX-importacceptatie: **niet uitgevoerd**.
+- Geen fixtures/bronbestanden naar productie/Git gepubliceerd; geen GitHub push/PR geclaimd.
+
+
 ## 2026-10-09 · Contractbasis en appskelet (0.1)
 Datum gebaseerd op ontvangen manifest/plan; geen onafhankelijke tijdmeting.
 

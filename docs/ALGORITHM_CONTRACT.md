@@ -1,9 +1,9 @@
 # Algoritmecontract
 
-Versie 0.3. **Bevestigd**: nieuwe gebruikersspecificatie voor packing, maatwerk en palletisatie (B4). Dit autoriseert implementatie en vervangt het eerdere engineverbod. Geen claim dat heuristieken bestaand Zite-gedrag reconstrueren. **Voorlopig voorstel**: onderstaande zoek-, support- en scorekeuzes. **Open**: echte productievoorbeelden, mastermapping en opslag.
+Versie 0.4; fysieke snapshot-envelop blijft 0.3. **Bevestigd**: nieuwe gebruikersspecificatie voor packing, maatwerk en palletisatie (B4). Dit autoriseert implementatie en vervangt het eerdere engineverbod. Geen claim dat heuristieken bestaand Zite-gedrag reconstrueren. **Voorlopig voorstel**: onderstaande zoek-, support- en scorekeuzes. **Open**: echte productievoorbeelden en bronmastermapping; private Supabase-opslag is geïmplementeerd.
 
 ## Behouden domeinregels
-R01 Shape-masterkey = ShapeID + ShapeVariantID; R02 standard voegt PackagingMode toe; R03 STOCK/PERSO gescheiden; R04 override mag alleen ProductNumber hebben; R05 override vóór standaard, veldmerge nog open; R06 historisch onveranderlijke solutions, bewerken maakt variant; R07 CurrentSolutionID kiest actief; R14 gecontroleerde Excel-masterdata; R15 appdata niet naar CERM-master. Deze opslag-/resolutieregels zijn nog geen geïmplementeerde databasefuncties.
+R01 Shape-masterkey = ShapeID + ShapeVariantID; R02 standard voegt PackagingMode toe; R03 STOCK/PERSO gescheiden; R04 override mag alleen ProductNumber hebben; R05 override vóór standaard, veldmerge nog open; R06 historisch onveranderlijke solutions, bewerken maakt variant; R07 CurrentSolutionID kiest actief; R14 gecontroleerde Excel-masterdata; R15 appdata niet naar CERM-master. Owner/context/mode/variant/current-solutionregels zijn nu in Supabase geïmplementeerd. Automatische veldgewijze override/fallback-resolutie blijft open.
 
 ## Fysieke regels (bevestigd)
 - R08 Placement is centrale waarheid: placementId, productId, x/y/z, length/width/height, orientation, layerIndex. X=lengte, Y=breedte, Z=hoogte; mm. Renderinstellingen wijzigen deze waarden nooit.
@@ -31,7 +31,10 @@ Ranking: benutting = nominal productvolume / intern doosvolume; transportEfficie
 
 Maatwerk één product: buitenmaat = interne maat + 2×kartondikte per as; standaard europallet 1200×800, 5% overmaat op totaal footprint, draaiing toegestaan, max elke buitenmaat 2000. Afgekeurde lineaire kandidaten worden met reden gerapporteerd. Multi-product: plaats werkelijk in kandidaatcontainers, leid vervolgens compacte interne doos af uit gevalideerde placements + speling, valideer opnieuw en pas hetzelfde realiteitsfilter toe.
 
-Pallet: raster 0/90 en guillotine-mengpatronen; lagen herhalen of alterneren alleen bij volledige steun. Lage transportefficiëntie weegt ook hier zwaar. Geen gewichtslimiet/stabiliteitscertificaat uit onbekend materiaalgedrag; expliciete waarschuwing. Bronnen packaging/database/saved gebruiken dezelfde gevalideerde buitenmaatadapter; geen database-opslag toegevoegd.
+Pallet: raster 0/90 en guillotine-mengpatronen; lagen herhalen of alterneren alleen bij volledige steun. Lage transportefficiëntie weegt ook hier zwaar. Geen gewichtslimiet/stabiliteitscertificaat uit onbekend materiaalgedrag; expliciete waarschuwing. Bronnen packaging/database/saved gebruiken dezelfde gevalideerde buitenmaatadapter; bron/settings/result-opslag in Supabase; opgeslagen oplossingen worden voor gebruik fysiek opnieuw gevalideerd.
+
+## Globale zoekconstraints (0.4)
+MaxWeightKg begrenst productinhoud tijdens iedere insert, zonder onbekend kartongewicht te verzinnen. MaxTotalLayers begrenst het aantal unieke Z-startniveaus over alle producten, met dezelfde epsilon-indexering als LayerIndex. UI 0 betekent geen limiet; API gebruikt optionele waarden. Deze constraints veranderen geen nominale maten en zijn niet hetzelfde als het achteraf toegepaste exactfilter. Totaal-lageninterpretatie blijft een expliciet algoritmevoorstel voor operatorreview; constraints gelden bij Verpakking zoeken, niet bij lineair maatwerk.
 
 ## Traceerbaarheid
 G01 R11–R12 hoogtespeling; G02 R13 exactfilter; G03 R18 lineair maatwerk; G04 R19 multi-product packing; G05 R17 te ruime doos; G06 R20 restplaatsing; G07 R22 overhang. Aanvullende tests: overlap/support/rotatie/maxima/cardboard/laaghoogte. Zie [tests](TEST_PLAN.md), [data](DATA_MODEL.md), [UI](UI_CONTRACT.md), [besluiten](DECISION_LOG.md) en [index](README.md).

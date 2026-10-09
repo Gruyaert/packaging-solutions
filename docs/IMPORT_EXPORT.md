@@ -1,26 +1,28 @@
 # Import/exportcontract
 
-Versie 0.2. **Bevestigd**: een lokale XLSX-inspectievoorziening is toegevoegd. **Voorlopig voorstel**: koprijkeuze en toekomstige importflow. **Open**: bronmapping, masterdatavalidatie en operationele exports.
+Versie 0.4. Lokale XLSX-inspectie, expliciete mastermapping/preview, atomische Supabase-sync en fysieke solution-/palletrapporten beschikbaar. Originele Excelheaders en bronmapping worden niet verzonnen.
 
-## Vastgelegde bronnen versus lokale inspectie
-Manifest/file-stat uit basisfase: Omdozen.xlsx 7.802 bytes; Shapes.xlsx 48.345 bytes. Geen oorspronkelijke bytes gewijzigd of naar public/docs gekopieerd. Werkelijke werkbladen/kolommen van deze twee bestanden zijn in deze implementatieturn niet gelezen; geen mapping ingevuld. Zie [bronregister](sources/README.md).
+## Bronnen en inspectie
+Oorspronkelijk manifest: Omdozen.xlsx 7.802 bytes, Shapes.xlsx 48.345 bytes. De assistent heeft die broninhoud nog niet onafhankelijk geïnspecteerd of goedgekeurd. Geen oorspronkelijke bytes gewijzigd, gepubliceerd of naar Git/public gekopieerd. Zie [bronregister](sources/README.md).
 
-## Beschikbare inspectie
-ExcelJS 4.4.0 is bewust toegevoegd voor read-only broninspectie en wordt pas bij bestandskeuze dynamisch geladen. src/infrastructure/inspect-workbook.ts leest ArrayBuffer in de browser. Geen backend, netwerkverzending, database of persistente state. De keuze van de gebruiker is noodzakelijk omdat de preview geen directe toegang tot chatbijlagen heeft.
+ExcelJS wordt pas bij bestandskeuze geladen. Inspectie-JSON versie 0.2 bevat bestandsnaam/grootte, SHA-256 indien Web Crypto beschikbaar, sheets/visibility/ranges, lege rijnummers, merges, celtypen/waarden/tekst en formules/cache. Formules worden niet uitgevoerd; cache kan ontbreken/verouderd zijn. Bestaande keyinspectie vergelijkt exacte bronwaarden/types. Rapportdelen/download is een bewuste gebruikersactie, niet automatische upload.
 
-JSON-rapport 0.2 bevat bestandsnaam, bytegrootte, inspectietijd, SHA-256 van oorspronkelijke bytes indien Web Crypto beschikbaar is, werkbladnamen/zichtbaarheid, gebruikt bereik, lege rijnummers binnen dat bereik, samengevoegde bereiken en alle niet-lege cellen met adres, type, geïnterpreteerde bronwaarde, tekst en indien aanwezig formule/sharedFormula/cachedValue. Cached values worden niet herberekend en kunnen verouderd zijn. Niet alle XLSX-XML/stijleigenschappen worden geïnventariseerd. Samengevoegde cellen kunnen de waarde van hun mastercel weerspiegelen; ranges zijn apart vastgelegd.
+## Operationele master-sync
+Omdozenbeheer en Shapes masterdata bieden een eigen expliciete werkblad/koprij/kolom-mapping; geen automatische suggestie op basis van bestandsnaam of kolomlabel. Verplichte cartonvelden: reference en interne length/width/height. Shapevelden: shape_id, variant_id, format_a/b/h. Gegevensmaten moeten positieve mm-getallen zijn; karton niet-negatief. Numerieke tekst accepteert decimale komma, niet automatische duizendtalsemantiek. Formulewaarden mogen voor numerieke maten alleen uit aanwezige cache komen; sleutelformules worden afgewezen. Booleanvelden accepteren true/false, 1/0, ja/nee of yes/no.
 
-Koprij = eerste niet-lege rij als aanpasbaar voorstel. Sleutelkolommen kiest de gebruiker, nooit op basis van bestandsnaam. Exacte bronwaarden plus typen worden vergeleken zonder trim-/nummernormalisatie; een witruimte-only waarde geldt wel als ontbrekend. Formules in keys zijn niet toetsbaar. Dubbele sleutelgroepen en ontbrekende/niet-toetsbare rijnummers zichtbaar; volledig lege rijen zijn apart gerapporteerd. Deze interactieve keuzes/controle-uitkomsten worden niet opgeslagen in het bronrapport.
+Ongekoppelde optionele doelvelden worden leeg/0, active=true en blocked=false. Ze kunnen bestaande waarden vervangen; preview toont de volledige doelwaarden. Geen stille behoud-/fallbackregel. Filters/paginering laten alle previewrecords bereikbaar. Fouten, ontbrekende required mappings, dubbel gemapte kolommen of dubbele keys blokkeren het geheel. Maximaal 2000 records; geen gedeeltelijke sync.
 
-Alleen vertrouwde XLSX tot 5 MB; maximaal 20.000 rijen en 256 kolommen per werkblad, 200.000 gevulde cellen per bestand. Structuurlimieten gelden na parsing, niet als bescherming tegen ZIP-bombs. Fouten geven geen gedeeltelijk werkboekrapport. Geen formules uitvoeren of links openen. Download is een inspectierapport, geen operationele export; kan vertrouwelijke bronwaarden bevatten.
+Na expliciete bevestiging van mapping/preview/mm-eenheid schrijft `sync_packaging_master` eigen records + filename/checksum/count/history in één transactie. Uniek op owner+reference of owner+shape_id+variant_id; upsert zonder automatische deletions. Oorspronkelijke bestanden/werkboekinhoud worden niet server-side bewaard. Shape Format A/B/H wordt niet automatisch vertaald naar product-L/B/H.
 
-## Nog te bevestigen (Q01, Q05)
-Headers/eenheden/semantiek, exacte doosentiteit, relaties en gevalideerde keys pas na beoordeling van werkelijk gedeelde rapporten. Technisch uitlezen is niet hetzelfde als goedgekeurde mapping of masterimport. Geen automatische schatting van eenheden.
+## Bestandsgrenzen
+Alleen vertrouwde XLSX tot 5 MB, maximaal 20.000 rijen/256 kolommen per blad en 200.000 gevulde cellen per bestand. Structuurlimieten gelden na parsing, dus geen volledige ZIP-bomb-/malwarebescherming. Geen links openen of formules uitvoeren.
 
-## Lokale solution-snapshots (0.3)
-Een gegenereerde solution kan als {contractVersion:"0.3",products,solution} worden gedownload. Placements, interne doosmaten, kartondikte en speling blijven fysiek ongewijzigd. Laagviewer/ranking maakt geen afgeleide exportcoördinaten. Opgeslagen snapshot als palletbron: lokaal bestand maximaal5MB, Zod-vorm/finite-number controle plus fysieke domainrevalidatie; scores/ValidationJSON opnieuw afleiden. Geen productieformat/CERM-write/databaseopslag. Rapport/snapshot kan vertrouwelijke gegevens bevatten.
+## Exports
+- **Fysieke solution-JSON 0.3**: products + box/spacing/placements, afgeleide validatie/scores. Bij openen schema en fysieke geometrie opnieuw valideren; niet vertrouwen op meegeleverde ValidationJSON. Lokale pallet-snapshotinvoer maximaal 5 MB. Geen definitie-/workspace-herstelimport.
+- **Solution HTML**: escaped gebruikerscontent, dezelfde concrete placements in tabellen/laag-SVG en ValidationJSON. Geen afgeleide renderercoördinaten.
+- **Pallet-JSON**: concrete bron, instellingen en geselecteerd fysiek patroon; opgeslagen resultaat is immutable.
+- **Werkruimte-JSON 0.4**: alle eigen masterrecords, definities, solution-metadata/context/snapshots, importhistoriek en palletresultaten. Alleen download, geen automatisch herstel of CERM-format.
 
-## Toekomstige productieflow — voorstel
-Bronherkomst vastleggen na toestemming → expliciete mapping-preview → schema-/keyvalidatierapport per werkblad/rij/veld → goedgekeurde masterrevisie, gescheiden van eigen appdata. Shapes niet vrij overschrijven; appdata niet als CERM-master terugschrijven (R14–R15). Importvervanging/verwijderingsbeleid/productie-exportformats open Q08, opslag Q09, Git-opname Q10. Geen productie-masterimport geïmplementeerd.
+Downloads kunnen vertrouwelijke data bevatten; geen automatisch delen/push naar GitHub/CERM. Master-sync wijzigt geen bestaande solution-snapshots. Bronpublicatie en productieformats blijven afzonderlijke besluiten.
 
 Zie [gebruik](USER_MANUAL.md), [data](DATA_MODEL.md), [tests](TEST_PLAN.md), [vragen](OPEN_QUESTIONS.md) en [index](README.md).

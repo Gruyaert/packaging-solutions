@@ -26,7 +26,7 @@ export interface Solution {
 }
 export type Strategy = "desired" | "fill";
 export type Sorting = "fill" | "practical";
-export interface SearchOptions { signal?: AbortSignal; maxAttempts?: number; maxPlacements?: number }
+export interface SearchOptions { signal?: AbortSignal; maxAttempts?: number; maxPlacements?: number; maxWeightKg?: number; maxTotalLayers?: number }
 export interface SearchResult { solutions: Solution[]; attempts: number; truncated: boolean; warnings: string[] }
 export const EPS = 1e-6;
 export const volume = (d: Dimensions) => d.length * d.width * d.height;

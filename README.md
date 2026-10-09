@@ -1,20 +1,21 @@
 # Verpakkingsoptimalisatie
 
-Enginefase0.3: productinvoer → concrete packingplacements → gevalideerde solutions → maatwerkdozen/palletisatie. Geen fictieve demoresultaten, geen globale optimaliteitsclaim.
+Werkruimtefase 0.4: private Supabase-opslag en functionele tabbed management rond de pure TypeScript packing-engine. Geen fictieve productmappings/resultaten of globale optimaliteitsclaim.
 
 ## Beschikbaar
-- Maximaal5 producten, zes selecteerbare rotaties, g/kg met3decimalen, rij-/kolom-/laagmaxima.
-- Gewenste aantallen en minimaal lucht/vullen; exactfilter apart, afwijkende oplossingen blijven behouden.
-- Single-product lineair maatwerk; multi-product echte packing, realiteitsfilter inclusief kartondikte.
-- Praktisch/ecologisch60/40 met zwaar gewicht voor lucht/transportvolume, restmetadata.
-- ValidationJSON, read-only laagviewer/placementtabel en lokale v0.3 JSON-snapshots.
-- Palletisatie met 0/90/meng/ondersteunde alternerende patronen, buitenmaten, overhang en metrics.
-- Bestaande lokale XLSX-inspectie, geen CSV-conversie vereist.
+- Email/password, publiek callback/reset en beschermde privéwerkruimte per gebruiker.
+- Verpakking zoeken, Omdoos op maat, Palletisatie, Omdozenbeheer, Shapes masterdata, Packaging Definitions, Solutions, Rapporten / Exports; discrete Debug / Performance.
+- Maximaal vijf producten, zes rotaties, g/kg, productmaxima; zoek-time totaalgewicht-/lagenlimieten, aparte exactfilter/ranking.
+- Filterbare tabellen, compacte uitgelijnde invoer, inklapbare advanced options en contained table overflow.
+- Omdozen CRUD/status, shapes read-only, expliciete lokale XLSX mapping/preview en atomische upsert/importhistoriek.
+- SHAPE/PRODUCT + STOCK/PERSO-definities, immutable physical snapshots en mode/context/variantguards.
+- Echte save/open/duplicate/recalculate-as-variant/validate/compare/activate/archive actions; read-only laagviewer en JSON/HTML-rapport.
+- Palletbron via filterbare database-dozen-/solutionlijst, berekende patterns en bron/settings/resultaatopslag.
 
-Engine puur TypeScript los van React; zoeken in annuleerbare Web Worker. Vitest golden fixtures voor alle7feedbackcases plus regressies. Zoek/placementlimieten worden expliciet gemeld; tests/build/typecheck in deze turn niet uitgevoerd wegens ontbrekende uitvoertool.
+Engine is los van React/database, zoeken in annuleerbare Web Worker. Zeven golden tests plus fysieke en globale zoeklimitregressies geschreven. Typecheck en schema-privileges gecontroleerd; buildstatus in changelog. Vitest/lint/browseracceptatie niet uitgevoerd.
 
-Database/CERM, gecontroleerde productie-masterimport, persistente versionering/CurrentSolutionID, Solution Editor, compressie en3D blijven afzonderlijke vervolgstappen. Pallet-Boxadapter accepteert doosrecords; UI heeft handmatige buitenmaat zolang database niet gekoppeld is. Gewicht/draagkracht/transportstabiliteit niet gecertificeerd.
+Nog niet beschikbaar: automatische override/fallback-resolutie, vrije placement-editor, compressie, 3D, gedeelde teams, CERM-integratie, workspace-herstelimport. Geen gewichts-/draagkracht-/transportcertificering. Originele Excelbytes niet gepubliceerd. Geen GitHub push/PR geclaimd.
 
-[Gebruik](docs/USER_MANUAL.md) · [Contract](docs/ALGORITHM_CONTRACT.md) · [Tests](docs/TEST_PLAN.md) · [Ontwikkeling](docs/DEVELOPER_MANUAL.md) · [Documentatie](docs/README.md) · [Changelog](docs/CHANGELOG.md) · [Vragen](docs/OPEN_QUESTIONS.md)
+[Gebruik](docs/USER_MANUAL.md) · [UI](docs/UI_CONTRACT.md) · [Algoritme](docs/ALGORITHM_CONTRACT.md) · [Tests](docs/TEST_PLAN.md) · [Ontwikkeling](docs/DEVELOPER_MANUAL.md) · [Documentatie](docs/README.md) · [Changelog](docs/CHANGELOG.md)
 
-React19/TypeScript/Vite/Tailwind/shadcn; routes in src/App.tsx. Geen backend. GitHub-opname/rechten/publicatie niet geverifieerd, geen push/PR geclaimd.
+React/TypeScript/Vite/Tailwind/shadcn + Supabase Auth/Postgres; centrale routes in src/App.tsx. Publishable browserkey, RLS en least-privilege grants; geen geheime servicekey in frontend.

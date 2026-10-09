@@ -39,7 +39,7 @@ function inspectCell(cell: Cell): InspectedCell {
   const value = cell.value;
   const result: InspectedCell = {
     address: cell.address,
-    column: cell.col as number,
+    column: Number(cell.col),
     type: value === null ? "leeg" : value instanceof Date ? "datum" : typeof value,
     text: cell.text,
     value: serializable(value),

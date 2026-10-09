@@ -1,6 +1,22 @@
 # Datamodelcontract
 
-Contractversie0.3. **Bevestigd** = vereiste uit B1/B4; geen Excelmapping. **Voorlopig voorstel** = technische representatie/heuristiek. **Open** = onbekend.
+Werkruimtecontract 0.4; fysiek snapshotcontract 0.3. **Bevestigd** = vereiste uit B1/B4; geen Excelmapping. **Voorlopig voorstel** = technische representatie/heuristiek. **Open** = onbekend.
+
+## Actuele Supabase-opslag (0.4, gaat voor historische voorstellen hieronder)
+Privé per auth-gebruiker, geen profielen/teams. Alle tabellen hebben UUID id, user_id met auth.users-FK, RLS en expliciete grants. Geen anon access of client hard delete; service_role full CRUD uitsluitend server-side.
+
+| Tabel | Velden en keys | Clientrechten / mutabiliteit |
+|---|---|---|
+| packaging_cartons | reference (uniek per owner), description/material, positieve interne length/width/height mm, cardboard>=0, active, modified_on | SELECT/INSERT/UPDATE; status ipv delete; snapshots bewaren hun eigen doosmaten |
+| packaging_shapes | shape_id+variant_id uniek per owner, description/product_group, positieve format_a/b/h mm, blocked/active, modified_on | SELECT; upsert alleen via master-sync-RPC |
+| packaging_definitions | name, scope SHAPE/PRODUCT, shape_id/variant_id of product_number, packaging_mode STOCK/PERSO, settings JSON, status, current_solution_id FK, modified_on | SELECT/INSERT/UPDATE; unieke owner/scope/masterkey/mode/productcontext; keycontext met solutions niet wijzigen |
+| packaging_solutions | definition_id optioneel, packaging_mode, name/status, created_from, based_on FK, snapshot JSON 0.3, metadata.notes, created_on/modified_on | SELECT/INSERT/UPDATE; alleen metadata/status wijzigbaar; snapshot/context/mode/afkomst/created_on immutable |
+| packaging_imports | kind cartons/shapes, filename/checksum, summary.rows/policy, created_on | SELECT; RPC schrijft atomisch bij master-sync |
+| packaging_pallets | name, source/settings/result JSON met concrete placements, created_on | SELECT/INSERT; opgeslagen resultaten immutable |
+
+Guards: eigenaar onveranderlijk; SHAPE-masterkey bestaat; definition/current solution en variantparent moeten owner/context/mode matchen. Actieve huidige solution niet archiveren. Activeren via afzonderlijke RPC wijzigt pointer/status binnen de definitie, niet placements. Standalone solution heeft eveneens een immutable mode. Eigen database-ID verschilt van lokale engine solutionId.
+
+Settings JSON is opslagruimte, geen geïmplementeerde automatische veldgewijze override/fallback-resolver. Source Format A/B/H is masterdata; geen automatische productas-mapping. Supabase standaardgrants zijn ingetrokken en minimale rollenrechten opnieuw toegepast; RLS én grants zijn gecontroleerd.
 
 ## Nieuw fysiek enginecontract (B4, leidend boven oude voorstellen)
 [types.ts](../src/domain/packing/types.ts) is uitvoerbaar: Product met productId/reference,length/width/height(mm),weightKg,quantity,rotations,maxInLength/maxInWidth/maxLayers. Product-ID is lokaal stabiel, niet automatisch ProductNumber/CERM-key. compressibilityX/Y/Z optioneel gereserveerd, niet toegepast.
@@ -9,9 +25,9 @@ Placement heeft verplichte placementId/productId,x/y/z,length/width/height (fini
 
 Box is een engine-inputadapter met boxId/reference, interne length/width/height en cardboard(mm), niet de bevestigde Excel-doosentiteit. Buitenmaat=binnen+2karton. Solution bevat solutionId/box/spacing/placements/ValidationJSON/counts/utilization/air/transportEfficiency/weightKg/practicalScore en metadata.restPlacementIds/handlingScore/pattern. Scores zijn afgeleid, nooit fysieke waarheid. Geen muterende solutionbewerking ingevoerd.
 
-Snapshotcontract0.3: {contractVersion,products,solution}; lokaal JSON met volledige placements/speling. Bij reimport schema én geometrie opnieuw valideren, afgeleide scores herberekenen. Geen CurrentSolutionID-owner, shape-resolutie of databaseversionering impliciet toevoegen. Palletinput gebruikt Box buitenmaten uit adapter/solution/saved snapshot; settings meten mm en overhang per zijde, resultaten concrete doosplacements plus counts/hoogte/benutting/score.
+Snapshotcontract0.3: {contractVersion,products,solution}; lokaal JSON met volledige placements/speling. Bij reimport schema én geometrie opnieuw valideren, afgeleide scores herberekenen. De fysieke envelop bevat geen database-owner/definitie/mode; die staan expliciet op het database-record. Shape-resolutie niet impliciet toevoegen. Palletinput gebruikt Box buitenmaten uit adapter/solution/saved snapshot; settings meten mm en overhang per zijde, resultaten concrete doosplacements plus counts/hoogte/benutting/score.
 
-## Eerder masterdata-/opslagveldregister (voorstellen; fysieke enginevelden hierboven gaan voor)
+## Historisch masterdata-/opslagveldregister (0.3; actuele opslag hierboven gaat voor)
 Types hieronder blijven voorstellen voor masterdata/opslag, niet Excelkolommen. Bron B1 tenzij B4 hierboven specificeert. Referentieel sleutelbeleid en eigenaar blijven open.
 
 | Entiteit / veld | Betekenis, typevoorstel | Verplicht / sleutel / relatie | Mutabiliteit en validatie | Status / vraag |

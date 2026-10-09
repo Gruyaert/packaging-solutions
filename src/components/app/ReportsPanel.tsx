@@ -1,0 +1,15 @@
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { parseSolutionSnapshot, downloadSolutionSnapshot } from "@/infrastructure/solution-snapshot";
+import { downloadFile, exportSolutionHtml } from "@/infrastructure/report-export";
+import { usePackagingData } from "./PackagingDataProvider";
+import { RecordTable } from "./RecordTable";
+
+export function ReportsPanel({ onSolution }: { onSolution(id: string): void }) {
+  const { records } = usePackagingData();
+  return <section className="space-y-5"><div><h1 className="text-2xl font-semibold">Rapporten / Exports</h1><p className="mt-1 text-xs text-muted-foreground">Rapporten en JSON gebruiken dezelfde opgeslagen placements. Bestanden kunnen vertrouwelijke productgegevens bevatten; deel ze bewust.</p></div>
+    <RecordTable label="Solutionrapporten" rows={records.solutions} columns={[{ label: "Naam", value: r => r.name }, { label: "Status", value: r => r.status }, { label: "Definitie", value: r => records.definitions.find(d => d.id === r.definition_id)?.name ?? "los" }, { label: "Datum", value: r => r.created_on }]} actions={r => <><Button size="sm" variant="outline" className="rounded-lg" onClick={() => onSolution(r.id)}>Openen</Button><Button size="sm" variant="outline" className="rounded-lg" onClick={() => { try { const parsed = parseSolutionSnapshot(JSON.stringify(r.snapshot)); exportSolutionHtml(r.name, parsed.solution, parsed.products); } catch (failure) { toast.error(failure instanceof Error ? failure.message : "Ongeldige snapshot."); } }}>HTML</Button><Button size="sm" variant="outline" className="rounded-lg" onClick={() => { try { const parsed = parseSolutionSnapshot(JSON.stringify(r.snapshot)); downloadSolutionSnapshot(parsed.solution, parsed.products); } catch (failure) { toast.error(failure instanceof Error ? failure.message : "Ongeldige snapshot."); } }}>JSON</Button></>} />
+    <h2 className="text-sm font-semibold">Palletresultaten</h2><RecordTable label="Palletrapporten" rows={records.pallets} columns={[{ label: "Naam", value: r => r.name }, { label: "Datum", value: r => r.created_on }, { label: "Patroon", value: r => r.result.pattern }, { label: "Aantal dozen", value: r => r.result.totalBoxes }]} actions={r => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => downloadFile("pallet-report.json", JSON.stringify(r, null, 2), "application/json")}>JSON</Button>} />
+    <details className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer text-sm font-semibold">Volledige werkruimte exporteren</summary><p className="my-3 text-xs text-muted-foreground">Bevat alle eigen masterrecords, definities, fysieke snapshots, importhistoriek en palletresultaten. Dit is een data-export, geen automatische herstelimport of CERM-formaat.</p><Button variant="outline" className="rounded-xl" onClick={() => downloadFile("packaging-workspace.json", JSON.stringify({ exportVersion: "0.4", exportedAt: new Date().toISOString(), records }, null, 2), "application/json")}>Privéwerkruimte JSON downloaden</Button></details>
+  </section>;
+}

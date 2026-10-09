@@ -1,17 +1,25 @@
 # Architectuur
 
-Versie0.3. React19/TypeScript/Vite, centrale routes in src/App.tsx. Packing-engine is puur TypeScript, UI onafhankelijk. Geen server/database.
+Versie 0.4. React/TypeScript/Vite, Tailwind/shadcn, React Router in `src/App.tsx`, Supabase Auth/Postgres. Packing blijft pure TypeScript, onafhankelijk van React, database en authenticatie.
 
-Domain/packing bevat types, collision/support/bounds, ValidationJSON, exactfilter/ranking, extreme-point engine, custom-box en pallet. Alle output wordt uit concrete placements opgebouwd. Input en resultatensets worden niet in-place veranderd door viewer/filter/ranking. Shape/override/operationele owner niet geïmplementeerd.
+## Lagen
+- **Domain/packing**: types, bounds/collision/full-footprint support, ValidationJSON, search-time gewicht-/lagenconstraints, exactfilter/ranking, begrensde engine, maatwerk en pallet.
+- **Application**: workerberichtcontract en annuleerbare Web Worker. Berekening blijft lokaal.
+- **Infrastructure**: lokale lazy ExcelJS-inspectie, fysieke Zod-snapshotrevalidatie, typed database-records en veilige lokale HTML/JSON-export.
+- **UI/auth**: Supabase Auth UI, sessiemonitor, beschermde `/`, publieke login/callback/reset. Geen eigen auth-protocol of profielmodel.
+- **UI/data**: PackagingDataProvider gebruikt per-gebruiker querykeys, pagineert databasefetches, levert typed records en echte mutaties/RPCs. Afmelden wist querycache.
+- **UI/screens**: compacte tabs en filterbare gepagineerde tabellen, managementcomponents, save/variant/active-flow, packingdetail en palletbron/resultaatopslag.
 
-Application bevat workerberichtcontract en Web Worker; UI start/annuleert worker. Domain kan ook rechtstreeks vanuit Node-tests draaien. Geen Reactimport in engine. Verwerking blijft lokaal en beperkt.
+## Databasegrens
+Zes `public.packaging_*`-tabellen met `user_id → auth.users.id`, RLS en expliciete grants. Geen anon privileges; service_role volledig server-side, nooit browsercredentials. Client CRUD is beperkt tot benodigde operations, geen hard delete. Shapes/importhistoriek worden uitsluitend door de authentieke atomische sync-RPC geschreven.
 
-Infrastructure bevat read-only ExcelJS-parser en Zod-gevalideerde solution-snapshotadapter. Ingelezen scores/ValidationJSON niet vertrouwen: fysieke data opnieuw valideren. Geen localStorage/API/CERM. Download is bewust lokaal bestand, geen versiebeheerbare opslag.
+`sync_packaging_master`: auth.uid vereist, 1–2000 rijen, explicit mapped data, upsert en historiek in één transactie, geen impliciete verwijdering. `activate_packaging_solution`: owner/context-scoped actieve status/pointer. Triggers bewaken ownership, immutable snapshot/context/mode/afkomst, bestaande shape-masterkey, mode-isolatie en een geldige current-solutionverwijzing. Geometrische validatie blijft domaincode, geen SQL-optimizer.
 
-UI: ProductInputs → invoersnapshot → worker → solutions → exactfilter/sortering → SolutionDetails. Viewer legt placements rechtstreeks in read-only SVG bovenaanzicht per laag. PalletPanel consumeert buitenmaten uit geselecteerde solution/gevalideerd snapshot/handmatige omdoos; database-recordadapter kan later aangesloten worden. Pallethoogte/overhang uit instellingen, geen productspeling opnieuw toepassen op buitenmaten.
+Definities hebben een afzonderlijke SHAPE/PRODUCT + STOCK/PERSO-context. Varianten blijven in dezelfde context en modus. Geen automatische override/fallback-resolver, rollen of gedeelde workspace ingevoerd.
 
-Toekomst: gecontroleerde masterimport → override/standard-resolutie → aparte STOCK/PERSO contexten → historische variants/CurrentSolutionID. Eigen appdata-opslag en CERM-grens Q04/Q09. Geen enginekeuze uit fictieve Excelmappings.
+## Veiligheid en grenzen
+Browser gebruikt uitsluitend publishable key. Auth redirect is absoluut op de huidige app-origin; PKCE/code/hash verwerking via de client. Recovery wordt voor gewone hoofdschermnavigatie afgehandeld. Exports escapen gebruikerscontent, SVG is afgeleid van gevalideerde placements. Originele XLSX-bestanden blijven lokaal; bevestigde records worden wel opgeslagen. Geen CERM-write of bronpublicatie.
 
-Veiligheid: lokale beperkte bestanden, schema/finite-number checks, geen formules of links uitvoeren, brontekst via React, geen HTMLinjectie. ExcelZIP-limitatie geldt na parsing en is geen malware-sandbox. Database/publicatie/privacybesluiten nog open.
+Querydata kan worden vernieuwd; geen realtime samenwerking. Geen globale optimaliteitsclaim, certificering, compressibility, 3D of vrije placement-editor. Browser-/operatoracceptatie en daadwerkelijk uitvoeren van unit tests blijven afzonderlijke verificatiestappen.
 
-Zie [contract](ALGORITHM_CONTRACT.md), [import](IMPORT_EXPORT.md), [data](DATA_MODEL.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).
+Zie [algoritme](ALGORITHM_CONTRACT.md), [data](DATA_MODEL.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).

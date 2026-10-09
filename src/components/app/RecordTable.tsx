@@ -1,0 +1,13 @@
+import { useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export interface TableColumn<T> { label: string; value(row: T): string | number; render?(row: T): ReactNode }
+export function RecordTable<T extends { id: string }>({ rows, columns, actions, label, selectedId }: { rows: T[]; columns: TableColumn<T>[]; actions?(row: T): ReactNode; label: string; selectedId?: string }) {
+  const [filters, setFilters] = useState<Record<number, string>>({}), [page, setPage] = useState(0);
+  const filtered = rows.filter(row => columns.every((col, index) => String(col.value(row)).toLowerCase().includes((filters[index] ?? "").toLowerCase())));
+  const pages = Math.max(1, Math.ceil(filtered.length / 25)), current = Math.min(page, pages - 1);
+  return <div className="min-w-0 space-y-3"><div className="max-w-full overflow-x-auto rounded-xl border" tabIndex={0} aria-label={label}><table className="w-full text-left text-xs"><thead className="bg-secondary/70"><tr>{columns.map((col, index) => <th key={index} className="min-w-28 p-2 align-top"><span className="block pb-2 font-semibold">{col.label}</span><Input aria-label={`Filter ${label}: ${col.label}`} className="h-8 rounded-lg bg-card text-xs" placeholder="Filter…" value={filters[index] ?? ""} onChange={e => { setFilters({ ...filters, [index]: e.target.value }); setPage(0); }} /></th>)}{actions && <th className="min-w-36 p-2">Acties</th>}</tr></thead><tbody>{filtered.slice(current * 25, current * 25 + 25).map(row => <tr key={row.id} className={`border-t ${selectedId === row.id ? "bg-primary/10" : "hover:bg-secondary/30"}`}>{columns.map((col, index) => <td key={index} className="max-w-60 break-words p-2 align-top">{col.render?.(row) ?? col.value(row)}</td>)}{actions && <td className="p-2 align-top"><div className="flex flex-wrap gap-2">{actions(row)}</div></td>}</tr>)}</tbody></table>{!filtered.length && <p className="p-5 text-sm text-muted-foreground">Geen records voor deze filters.</p>}</div>
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span>{filtered.length} / {rows.length} records · pagina {current + 1}/{pages}</span><Button type="button" variant="outline" size="sm" className="rounded-lg" disabled={current === 0} onClick={() => setPage(current - 1)}>Vorige</Button><Button type="button" variant="outline" size="sm" className="rounded-lg" disabled={current + 1 >= pages} onClick={() => setPage(current + 1)}>Volgende</Button><Button type="button" variant="ghost" size="sm" className="rounded-lg" onClick={() => { setFilters({}); setPage(0); }}>Filters wissen</Button></div>
+  </div>;
+}

@@ -1,33 +1,48 @@
 import { useEffect, useRef, useState } from "react";
-import { Boxes, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DEFAULT_CUSTOM, type CustomSettings } from "@/domain/packing/custom-box";
 import { assertInput, weightInKg, type Box, type Product, type Solution, type Sorting, type Spacing, type Strategy } from "@/domain/packing/types";
 import { exactFilter, sortSolutions } from "@/domain/packing/scoring";
 import type { PackingRequest, PackingResponse } from "@/application/packing-job";
+import { toBox, type SolutionRecord } from "@/infrastructure/packaging-records";
+import { exportSolutionHtml } from "@/infrastructure/report-export";
 import { newProduct, NumberField, ProductInputs } from "./ProductInputs";
-import { PalletPanel } from "./PalletPanel";
 import { SolutionDetails } from "./SolutionDetails";
+import { usePackagingData } from "./PackagingDataProvider";
+import { RecordTable } from "./RecordTable";
+import { SaveSolution } from "./SaveSolution";
 
-export function PackingWorkbench() {
-  const [products, setProducts] = useState([newProduct(1)]);
-  const [mode, setMode] = useState<"search" | "custom">("search");
+export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution): void }) {
+  const { records } = usePackagingData();
+  const [products, setProducts] = useState([newProduct(1)]), [source, setSource] = useState("database");
   const [strategy, setStrategy] = useState<Strategy>("desired"), [sorting, setSorting] = useState<Sorting>("fill"), [exact, setExact] = useState(false);
   const [spacing, setSpacing] = useState<Spacing>({ length: 0, width: 0, height: 0 });
   const [custom, setCustom] = useState<CustomSettings>({ ...DEFAULT_CUSTOM });
-  const [boxes, setBoxes] = useState<Box[]>([{ boxId: "box-1", reference: "Doos 1", length: 0, width: 0, height: 0, cardboard: 3 }]);
+  const [boxes, setBoxes] = useState<Box[]>([]), [manual, setManual] = useState<Box[]>([{ boxId: "manual-1", reference: "Handmatige doos 1", length: 0, width: 0, height: 0, cardboard: 0 }]);
+  const [maxWeight, setMaxWeight] = useState(0), [maxLayers, setMaxLayers] = useState(0);
   const [response, setResponse] = useState<Extract<PackingResponse, { result: unknown }>>();
   const [resultProducts, setResultProducts] = useState<Product[]>([]), [resultMode, setResultMode] = useState<"search" | "custom">("search");
   const [selectedId, setSelectedId] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const workerRef = useRef<Worker | undefined>(undefined);
   useEffect(() => () => workerRef.current?.terminate(), []);
+  useEffect(() => {
+    workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setResponse(undefined); setError("");
+    if (!initial) { setProducts([newProduct(1)]); setSpacing({ length: 0, width: 0, height: 0 }); setBoxes([]); setSource("database"); setMaxWeight(0); setMaxLayers(0); return; }
+    const snapshot = initial.snapshot;
+    setProducts(snapshot.products.map(p => { const inKg = Math.abs(p.weightKg * 1000 - Math.round(p.weightKg * 1000)) < 1e-6; return { ...p, inputWeight: inKg ? p.weightKg : Number((p.weightKg * 1000).toFixed(3)), weightUnit: inKg ? "kg" as const : "g" as const }; }));
+    setSpacing(snapshot.solution.spacing); setManual([snapshot.solution.box]); setSource("manual");
+    setCustom(c => ({ ...c, cardboard: snapshot.solution.box.cardboard }));
+  }, [initial, definitionId]);
   function calculate() {
     setError("");
     try {
       const normalized = products.map(({ inputWeight, weightUnit, ...product }) => ({ ...product, weightKg: weightInKg(inputWeight, weightUnit) }));
-      assertInput(normalized, spacing, mode === "search" ? boxes : []);
-      const job: PackingRequest = { products: normalized, mode, boxes, spacing, strategy, custom };
+      const candidates = source === "database" ? boxes : manual;
+      assertInput(normalized, spacing, mode === "search" ? candidates : []);
+      if (mode === "search" && !candidates.length) throw new Error("Selecteer minstens één actieve omdoos uit de lijst of voer handmatige interne maten in.");
+      if (!Number.isFinite(maxWeight) || maxWeight < 0 || !Number.isSafeInteger(maxLayers) || maxLayers < 0) throw new Error("Maximumgewicht moet niet-negatief zijn; totaal aantal lagen moet niet-negatief en geheel zijn.");
+      const job: PackingRequest = { products: normalized, mode, boxes: candidates, spacing, strategy, custom, maxWeightKg: maxWeight || undefined, maxTotalLayers: maxLayers || undefined };
       workerRef.current?.terminate();
       const worker = new Worker(new URL("../../application/packing.worker.ts", import.meta.url), { type: "module" });
       workerRef.current = worker; setBusy(true); setResponse(undefined);
@@ -37,42 +52,31 @@ export function PackingWorkbench() {
         if ("error" in data) setError(data.error);
         else { setResponse(data); setResultProducts(normalized); setResultMode(mode); setSelectedId(data.result.solutions[0]?.solutionId ?? ""); }
       };
-      worker.onerror = () => { if (workerRef.current !== worker) return; setBusy(false); worker.terminate(); workerRef.current = undefined; setError("De rekenworker kon niet worden uitgevoerd. Probeer opnieuw of controleer de previewfout."); };
+      worker.onerror = () => { if (workerRef.current !== worker) return; setBusy(false); worker.terminate(); workerRef.current = undefined; setError("De rekenworker kon niet worden uitgevoerd."); };
       worker.postMessage(job);
-    } catch (err) { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError(err instanceof Error ? err.message : "Ongeldige invoer."); }
+    } catch (failure) { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError(failure instanceof Error ? failure.message : "Ongeldige invoer."); }
   }
   const linear = resultMode === "custom" && resultProducts.length === 1;
   const filtered = response ? (exact ? exactFilter(response.result.solutions, resultProducts) : response.result.solutions) : [];
   const ranked = linear ? filtered : sortSolutions(filtered, sorting);
-  const selected: Solution | undefined = ranked.find(s => s.solutionId === selectedId) ?? ranked[0];
-  return <Card className="rounded-3xl border-primary/25 shadow-none">
-    <CardHeader className="p-5 sm:p-7"><div className="mb-2 flex items-center gap-2 text-primary"><Boxes aria-hidden="true" className="size-5" /><span className="text-xs font-bold uppercase tracking-widest">Packing · maatwerk · palletisatie</span></div><h1 className="text-3xl font-semibold tracking-tight">Verpakkingsoptimalisatie</h1><p className="text-sm leading-relaxed text-muted-foreground">Vul echte product- en doosmaten in. Alle resultaten komen uit gecontroleerde placements. Zoekdekking is heuristisch; er is geen databasekoppeling of automatische Excelmapping.</p></CardHeader>
-    <CardContent className="space-y-6 px-5 pb-5 sm:px-7 sm:pb-7">
-      <form onSubmit={e => { e.preventDefault(); calculate(); }} className="space-y-6">
-        <fieldset disabled={busy} className="space-y-6">
-          <div className="flex flex-wrap gap-3"><Button type="button" variant={mode === "search" ? "default" : "outline"} className="rounded-xl" aria-pressed={mode === "search"} onClick={() => setMode("search")}>Verpakking zoeken</Button><Button type="button" variant={mode === "custom" ? "default" : "outline"} className="rounded-xl" aria-pressed={mode === "custom"} onClick={() => setMode("custom")}>Omdoos op maat</Button></div>
-          <ProductInputs products={products} onChange={setProducts} />
-          <section className="space-y-3"><h3 className="font-semibold">Praktische speling</h3><div className="grid grid-cols-1 gap-3 sm:grid-cols-3">{(["length", "width", "height"] as const).map((key, i) => <NumberField key={key} label={["Lengtespeling totaal", "Breedtespeling totaal", "Hoogtespeling bovenaan"][i] + " (mm)"} value={spacing[key]} onChange={n => setSpacing({ ...spacing, [key]: n })} />)}</div><p className="text-xs text-muted-foreground">L/B gelijk verdeeld over beide zijden. Z begint op 0; hoogtespeling ligt uitsluitend bovenaan.</p></section>
-          {mode === "search" ? <section className="space-y-4">
-            <label className="block space-y-1 text-sm font-medium">Zoekstrategie<select className="h-10 w-full rounded-xl border bg-background px-3" value={strategy} onChange={e => setStrategy(e.target.value as Strategy)}><option value="desired">Gewenste aantallen · inclusief afwijkende alternatieven</option><option value="fill">Minimale lucht / maximaal vullen</option></select></label>
-            <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Kandidaatdozen · interne maten</h3><Button type="button" variant="outline" className="rounded-xl" disabled={boxes.length >= 8} onClick={() => setBoxes([...boxes, { boxId: `box-${Date.now()}`, reference: `Doos ${boxes.length + 1}`, length: 0, width: 0, height: 0, cardboard: 3 }])}>Doos toevoegen</Button></div>
-            {boxes.map((box, index) => <div key={box.boxId} className="rounded-2xl border bg-background p-4"><div className="mb-3 flex items-center justify-between text-sm font-medium">{box.reference}{index > 0 && <Button type="button" variant="ghost" className="rounded-xl" onClick={() => setBoxes(boxes.filter(b => b.boxId !== box.boxId))}>Verwijderen</Button>}</div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{(["length", "width", "height", "cardboard"] as const).map((key, i) => <NumberField key={key} label={["Binnen-L", "Binnen-B", "Binnen-H", "Kartondikte"][i] + " (mm)"} value={box[key]} onChange={n => setBoxes(boxes.map(b => b.boxId === box.boxId ? { ...b, [key]: n } : b))} />)}</div></div>)}
-          </section> : <section className="space-y-3"><h3 className="font-semibold">Maatwerk · realiteitsfilter</h3><p className="text-xs text-muted-foreground">{products.length === 1 ? "Lineaire opties per toegelaten rotatie; eerst herhalen over de kortste productmaat. Geen lucht-/ecologische sortering." : "Echte multi-product packing: alle gevraagde producten, gevolgd door compacte doosafleiding en hervalidatie."}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-5">{(["cardboard", "palletLength", "palletWidth", "oversizePercent", "maxBoxDimension"] as const).map((key, i) => <NumberField key={key} label={["Karton (mm)", "Pallet-L (mm)", "Pallet-B (mm)", "Overmaat (%)", "Max. doosmaat (mm)"][i]} value={custom[key]} onChange={n => setCustom({ ...custom, [key]: n })} />)}</div></section>}
-        </fieldset>
-        <div className="flex flex-wrap gap-3"><Button type="submit" className="gap-2 rounded-xl px-6" disabled={busy}>{busy && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}{busy ? "Zoeken…" : mode === "search" ? "Verpakkingen zoeken" : "Maatwerkdozen berekenen"}</Button>{busy && <Button type="button" variant="outline" className="rounded-xl" onClick={() => { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError("Zoekopdracht geannuleerd."); }}>Annuleren</Button>}</div>
-      </form>
-      <p className="text-xs text-muted-foreground">Maximaal 96 pogingen, 300 placements per poging en een geometrisch werkbudget. Limieten worden gemeld. Geen garantie op globale optimale oplossing.</p>
-      {error && <p role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
-      {response && <section className="space-y-4" aria-label="Packingresultaten">
-        <div className="rounded-xl bg-secondary p-4 text-sm"><strong>{response.result.solutions.length} geldige gevonden oplossingen</strong> · {response.result.attempts} pogingen{response.result.truncated && " · zoeklimiet bereikt"}<p className="mt-2 text-xs">{response.result.warnings.join(" ")}</p><p className="mt-2 text-xs">Resultaten gebruiken de invoersnapshot van de laatste berekening; gewijzigde invoer vereist opnieuw berekenen.</p></div>
-        {!linear && <div className="flex flex-wrap items-center gap-4"><label className="text-sm">Sortering<select className="ml-2 rounded-xl border bg-background p-2" value={sorting} onChange={e => { setSorting(e.target.value as Sorting); setSelectedId(""); }}><option value="fill">{resultMode === "custom" ? "Minimale lucht" : "Maximale vulling"}</option><option value="practical">Praktisch/ecologisch</option></select></label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={exact} onChange={e => { setExact(e.target.checked); setSelectedId(""); }} />Exact gevraagd aantal · filter op resultaten</label></div>}
-        <p className="text-xs text-muted-foreground">{ranked.length} zichtbaar · {linear ? "lineaire generatievolgorde" : "sortering verandert geen zoekresultaten of placements"}</p>
-        {ranked.length > 0 && <label className="block space-y-1 text-sm font-medium">Solution<select className="h-11 w-full rounded-xl border bg-background px-3" value={selected?.solutionId ?? ""} onChange={e => setSelectedId(e.target.value)}>{ranked.map((s, i) => <option key={s.solutionId} value={s.solutionId}>{i + 1}. {s.box.reference} · {(s.utilization * 100).toFixed(1)}% · {Object.values(s.counts).join("/")} stuks</option>)}</select></label>}
-        {!ranked.length && <p className="text-sm">Geen geldige oplossing gevonden binnen deze zoekdekking{exact ? " met exact de gevraagde aantallen" : ""}. Dit bewijst niet dat packing onmogelijk is.</p>}
-        {selected && <SolutionDetails key={selected.solutionId} solution={selected} products={resultProducts} />}
-        {!!response.result.rejected?.length && <details className="text-sm"><summary className="cursor-pointer">Afgekeurde maatwerkvarianten ({response.result.rejected.length})</summary><ul className="mt-3 space-y-2 text-xs">{response.result.rejected.map((r, i) => <li key={i}>{r.pattern}: {r.errors.join(" ")}</li>)}</ul></details>}
-      </section>}
-      <PalletPanel key={selected?.solutionId ?? "no-solution"} solution={selected} />
-    </CardContent>
-  </Card>;
+  const selected = ranked.find(s => s.solutionId === selectedId) ?? ranked[0];
+  const context = records.definitions.find(d => d.id === (initial?.definition_id ?? definitionId));
+  return <section className="min-w-0 space-y-5"><div><h1 className="text-2xl font-semibold tracking-tight">{mode === "search" ? "Verpakking zoeken" : "Omdoos op maat"}</h1><p className="mt-1 text-xs text-muted-foreground">{context ? `Context: ${context.name} · ${context.scope} · ${context.packaging_mode}. ` : ""}{initial && "Bewerken maakt een nieuwe variant; het origineel blijft ongewijzigd. "}Alle resultaten komen uit geometrisch gecontroleerde placements.</p></div>
+    <form onSubmit={e => { e.preventDefault(); calculate(); }} className="space-y-5"><fieldset disabled={busy} className="space-y-5">
+      <ProductInputs products={products} onChange={setProducts} />
+      <details className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer text-sm font-semibold">Geavanceerd · praktische speling{mode === "search" && ", gewicht en totaal aantal lagen"}</summary><div className="mt-4 space-y-3"><div className="grid gap-3 sm:grid-cols-3">{(["length", "width", "height"] as const).map((key, i) => <NumberField key={key} label={["L-speling totaal (mm)", "B-speling totaal (mm)", "H-speling bovenaan (mm)"][i]} value={spacing[key]} onChange={n => setSpacing({ ...spacing, [key]: n })} />)}</div><p className="text-xs text-muted-foreground">L/B gelijk verdeeld over beide zijden. Z begint op 0; hoogtespeling uitsluitend bovenaan.</p>{mode === "search" && <><div className="grid gap-3 sm:grid-cols-2"><NumberField label="Max. totaal productgewicht (kg) · 0=geen limiet" step="0.001" value={maxWeight} onChange={setMaxWeight} /><NumberField label="Max. totaal lagen · 0=geen limiet" step="1" value={maxLayers} onChange={setMaxLayers} /></div><p className="text-xs text-muted-foreground">Gewicht van inhoud; doosgewicht is onbekend en wordt niet geschat. Lagen tellen unieke Z-startniveaus over alle producten. Beide limieten gelden tijdens het zoeken, niet als resultaatfilter.</p></>}</div></details>
+      {mode === "search" ? <section className="space-y-3"><div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1 text-xs">Zoekstrategie<select className="h-10 w-full rounded-xl border bg-card px-3" value={strategy} onChange={e => setStrategy(e.target.value as Strategy)}><option value="desired">Gewenste aantallen · met afwijkende alternatieven</option><option value="fill">Minimale lucht / maximaal vullen</option></select></label><label className="space-y-1 text-xs">Doosbron<select className="h-10 w-full rounded-xl border bg-card px-3" value={source} onChange={e => setSource(e.target.value)}><option value="database">Omdozen uit Supabase</option><option value="manual">Handmatige interne maten</option></select></label></div>
+        {source === "database" ? <><p className="text-xs">{boxes.length} kandidaatdozen geselecteerd. Selectie bewaart de maten op het selectiemoment.</p><RecordTable label="Kandidaatdozen" rows={records.cartons.filter(c => c.active)} columns={[{ label: "Referentie", value: c => c.reference }, { label: "Beschrijving", value: c => c.description }, { label: "Binnen-L", value: c => c.length }, { label: "Binnen-B", value: c => c.width }, { label: "Binnen-H", value: c => c.height }, { label: "Karton", value: c => c.cardboard }]} actions={c => <label className="flex items-center gap-2"><input type="checkbox" checked={boxes.some(b => b.boxId === c.id)} onChange={e => setBoxes(e.target.checked ? [...boxes, toBox(c)] : boxes.filter(b => b.boxId !== c.id))} />Kandidaat</label>} /><div className="flex flex-wrap gap-2">{boxes.map(b => <Button key={b.boxId} type="button" size="sm" variant="outline" className="rounded-lg" onClick={() => setBoxes(boxes.filter(c => c.boxId !== b.boxId))}>{b.reference} ×</Button>)}</div></> : <><div className="flex items-center justify-between gap-3"><h2 className="text-sm font-semibold">Interne kandidaatdoosmaten</h2><Button type="button" variant="outline" size="sm" className="rounded-xl" disabled={manual.length >= 8} onClick={() => setManual([...manual, { boxId: crypto.randomUUID(), reference: `Handmatige doos ${manual.length + 1}`, length: 0, width: 0, height: 0, cardboard: 0 }])}>Doos toevoegen</Button></div>{manual.map(box => <div key={box.boxId} className="space-y-3 rounded-xl border bg-card p-3"><div className="flex justify-between gap-3 text-xs">{box.reference}{manual.length > 1 && <Button type="button" size="sm" variant="ghost" className="rounded-lg" onClick={() => setManual(manual.filter(b => b.boxId !== box.boxId))}>Verwijderen</Button>}</div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{(["length", "width", "height", "cardboard"] as const).map((key, index) => <NumberField key={key} label={["Binnen-L (mm)", "Binnen-B (mm)", "Binnen-H (mm)", "Kartondikte (mm)"][index]} value={box[key]} onChange={n => setManual(manual.map(b => b.boxId === box.boxId ? { ...b, [key]: n } : b))} />)}</div></div>)}</>}
+      </section> : <details open className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer text-sm font-semibold">Maatwerk · realiteitsfilter</summary><div className="mt-4 space-y-3"><p className="text-xs text-muted-foreground">{products.length === 1 ? "Lineaire opties per rotatie, zonder lucht-/ecologische sortering." : "Echte multi-product packing met alle gevraagde producten, compacte doosafleiding en hervalidatie."}</p><div className="grid grid-cols-2 gap-3 lg:grid-cols-5">{(["cardboard", "palletLength", "palletWidth", "oversizePercent", "maxBoxDimension"] as const).map((key, i) => <NumberField key={key} label={["Karton (mm)", "Pallet-L (mm)", "Pallet-B (mm)", "Overmaat (%)", "Max. doosmaat (mm)"][i]} value={custom[key]} onChange={n => setCustom({ ...custom, [key]: n })} />)}</div></div></details>}
+    </fieldset><div className="flex flex-wrap gap-3"><Button className="gap-2 rounded-xl" disabled={busy}>{busy && <Loader2 className="size-4 animate-spin" />}{busy ? "Zoeken…" : mode === "search" ? "Verpakkingen zoeken" : "Maatwerkdozen berekenen"}</Button>{busy && <Button type="button" variant="outline" className="rounded-xl" onClick={() => { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError("Zoekopdracht geannuleerd."); }}>Annuleren</Button>}</div></form>
+    {error && <p role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
+    <p className="text-xs text-muted-foreground">Max. 96 pogingen, 300 placements per poging en begrensd geometrisch werkbudget. Geen globaal optimum of garantie op volledige zoekdekking.</p>
+    {response && <section className="space-y-4" aria-label="Packingresultaten"><div className="rounded-xl bg-secondary p-4 text-sm"><strong>{response.result.solutions.length} geldige oplossingen</strong> · {response.result.attempts} pogingen{response.result.truncated && " · zoeklimiet bereikt"}<p className="mt-2 text-xs">{response.result.warnings.join(" ")}</p><p className="mt-2 text-xs">Resultaatsnapshot van {resultMode === "search" ? "verpakking zoeken" : "maatwerk"}; gewijzigde invoer vereist opnieuw berekenen.</p></div>
+      {!linear && <div className="flex flex-wrap items-center gap-3"><label className="text-xs">Sortering<select className="ml-2 rounded-xl border bg-card p-2" value={sorting} onChange={e => setSorting(e.target.value as Sorting)}><option value="fill">Maximale vulling / minimale lucht</option><option value="practical">Praktisch/ecologisch</option></select></label><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={exact} onChange={e => setExact(e.target.checked)} />Exact gevraagd aantal · resultaatfilter</label></div>}
+      <RecordTable label="Packingresultaten" selectedId={selected?.solutionId} rows={ranked.map(s => ({ ...s, id: s.solutionId }))} columns={[{ label: "Doos", value: s => s.box.reference }, { label: "Binnenmaat", value: s => `${s.box.length} × ${s.box.width} × ${s.box.height}` }, { label: "Aantallen", value: s => Object.values(s.counts).join(" / ") }, { label: "Benutting %", value: s => (s.utilization * 100).toFixed(1) }, { label: "Gewicht kg", value: s => s.weightKg.toFixed(3) }, { label: "Patroon", value: s => s.metadata.pattern }]} actions={s => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setSelectedId(s.solutionId)}>Bekijken</Button>} />
+      {!ranked.length && <p className="text-xs">Geen oplossing binnen deze dekking{exact ? " met exact de gevraagde aantallen" : ""}. Dit bewijst niet dat packing onmogelijk is.</p>}
+      {selected && <><div className="flex flex-wrap gap-2"><Button className="rounded-xl" onClick={() => onPalletize(selected)}>Palletiseren</Button><Button variant="outline" className="rounded-xl" onClick={() => exportSolutionHtml(selected.box.reference, selected, resultProducts)}>HTML-rapport</Button></div><SaveSolution key={selected.solutionId} solution={selected} products={resultProducts} mode={resultMode} definitionId={initial?.definition_id ?? definitionId} basedOn={initial?.id} onSaved={onSaved} /><SolutionDetails key={selected.solutionId} solution={selected} products={resultProducts} /></>}
+      {!!response.result.rejected?.length && <details className="text-xs"><summary className="cursor-pointer">Afgekeurde maatwerkvarianten ({response.result.rejected.length})</summary><ul className="mt-3 space-y-2">{response.result.rejected.map((r, i) => <li key={i}>{r.pattern}: {r.errors.join(" ")}</li>)}</ul></details>}
+    </section>}
+  </section>;
 }

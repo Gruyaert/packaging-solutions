@@ -1,6 +1,6 @@
 # Documentatie · Verpakkingsoptimalisatie
 
-Contractversie0.3 · heuristische packing, maatwerk, palletisatie en lokale broninspectie. Productieopslag/mastermapping nog open. B4 = nieuwe expliciete gebruikersprompt voor enginefeedback; deze vervangt het oude implementatieverbod en bevestigt assen, mm, speling, rotaties en golden verwachtingen.
+Werkruimtecontract 0.4 · Supabase Auth/private opslag, tabbed management, gecontroleerde imports en heuristische packing/maatwerk/palletisatie. Fysieke snapshotversie blijft 0.3; bronmapping en productieacceptatie blijven open. B4 = nieuwe expliciete gebruikersprompt voor enginefeedback; deze vervangt het oude implementatieverbod en bevestigt assen, mm, speling, rotaties en golden verwachtingen.
 
 ## Index: twaalf verplichte documenten
 1. [Deze index](README.md)

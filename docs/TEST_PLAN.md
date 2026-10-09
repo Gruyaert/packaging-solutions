@@ -1,6 +1,31 @@
 # Testplan
 
-Versie 0.3. B4 (huidige gebruikersprompt) is bron van onderstaande golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.4. B4 (huidige gebruikersprompt) is bron van onderstaande golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+
+## Actuele 0.4-verificatie en nieuwe acceptatie
+- Projectbrede TypeScriptcheck: uitgevoerd, geslaagd na correctie van de ExcelJS cell.col-conversie.
+- Database audit: alle zes tabellen RLS=true; anon SELECT=false, geen client DELETE; shapes/imports geen directe client INSERT/UPDATE, pallets INSERT-only; own-user policies en service-role grants aanwezig.
+- Productiebuild: zie actuele changelog; unit/lint/browseracceptatie niet uitgevoerd.
+- [search-limits.test.ts](../src/domain/packing/search-limits.test.ts): regressies voor caps tijdens fill, globale Z-lagen, inputimmutability en ongeldige limieten, geschreven maar niet uitgevoerd.
+
+| ID | Acceptatiecase | Status |
+|---|---|---|
+| D01 | signup/login/logout, bevestiging, actuele-origin callback, cache leeg bij ander account | browser nog niet uitgevoerd |
+| D02 | recovery met PKCE/hash bereikt update-password vóór hoofdscherm; verlopen links geven fout | browser nog niet uitgevoerd |
+| D03 | twee accounts kunnen elkaars records niet lezen/wijzigen, anon geen toegang | schema audit geslaagd; twee-accountintegratietest open |
+| D04 | carton CRUD/status, snapshotdoos blijft gelijk na masterwijziging | browser open |
+| D05 | expliciete mapping, positieve mm, duplicate/missing keys, booleans/formulecache; volledige preview | echte XLSX/browser open |
+| D06 | sync volledige transactie inclusief history, failure geen gedeeltelijke wijzigingen, geen deletes | function/constraints gereviewd; rollbackscenario open |
+| D07 | readonly shapes; actieve shape kiezen; PRODUCT zonder shape; STOCK/PERSO-contexten | browser open |
+| D08 | save/open/metadata/duplicate/variantrecalc/validate/compare; oorspronkelijke placements gelijk | browser open |
+| D09 | snapshot/context/mode/based_on/owner edits afgewezen; current solution binnen eigen definitie | triggers aanwezig; mutatietests open |
+| D10 | activate pointer atomisch, actieve solution niet archiveren, concept herstellen | RPC/guards aanwezig; browser/concurrentietest open |
+| D11 | palletbron filtertable ipv doosdropdown, karton precies eenmaal, opgeslagen input/settings/result | browser open |
+| D12 | HTML escapen en dezelfde placements; JSON revalidatie; werkruimte-export alleen eigen records | code gereviewd; browser/downloadtest open |
+| D13 | 320/768/1280/1920px: geen horizontale page-scroll; tabel lokale scroll, label/inputuitlijning, toetsenbord/a11y | browser open |
+| D14 | zoekannulering/truncatie, geen stale results van andere definitie; fouten niet als opgeslagen presenteren | code gereviewd; browser open |
+
+Geen geautomatiseerde tests als groen presenteren op basis van alleen typecheck/build. Geen fixtures naar productiegegevens schrijven voor deze audit.
 
 ## Uitvoerbare domeintests
 Bestand [packing.test.ts](../src/domain/packing/packing.test.ts), Vitest Node-config [src/vitest.config.ts](../src/vitest.config.ts). React en worker zijn niet nodig om de engine te testen. Package-script test = eenmalige Vitest-run; test:watch = interactieve runner; typecheck = TypeScript zonder emit.
@@ -23,9 +48,9 @@ Vergelijking: exacte fixturecoördinaten waar bepaald, anders volledige fysieke 
 Product1 verplicht; maximaal5; verwijdering optioneel product; uitsluitend geselecteerde rotaties; gewicht g/kg; beide strategieën; exacttoggle zonder zoeken; single custom zonder sortering; multi custom met sortering; afgekeurde varianten zichtbaar; workerannulering; gewijzigde input vereist opnieuw rekenen; laagviewer wijzigt placements niet; JSON export/reimport geen maat/spacingverandering; palletbronnen/overhang/hoogtepatronen. Responsiviteit, toegankelijkheid en operatorreview nog nodig.
 
 ## Behouden eerdere contracttests
-T01–T07 en T14–T15 (masterkeys, override-resolutie, modusisolatie, historisch variant-/actiefbeheer en CERM-grens) blijven toekomstige opslag-/resolutietests. T08–T13 worden fysiek onderbouwd door G01/G02 en support/immutabilityregressies; 3D/animatie volgen later. Geen database/versioneringsclaim.
+T01–T07 en T14–T15 worden voor geïmplementeerde opslag gedekt door bovenstaande acceptatiecases; automatische override-resolutie en CERM blijven toekomstig. T08–T13 worden fysiek onderbouwd door G01/G02 en support/immutabilityregressies; 3D/animatie volgen later. Databaseguards zijn geïmplementeerd; daadwerkelijk uitgevoerde mutatie-/browseracceptatie blijft open.
 
 I01–I08 blijven inspectieacceptatie: oorspronkelijke XLSX-werkbladen/hiddenstate/celwaarden, koprij en exacte keys, formules/cache zonder uitvoeren, SHA-256, geen file-data upload/persistentie, fouten/limieten en volledig JSON-bronrapport. Excelinhoud niet uit fixturedata afleiden.
 
-## Werkelijke verificatiestatus
+## Historische verificatiestatus 0.3 (niet de actuele 0.4-status)
 In deze turn: code/types handmatig gelezen, Vitest-dependency succesvol geïnstalleerd. Geen command-executie- of browsertool beschikbaar, dus Vitest, typecheck, build, lint en browseracceptatie **niet uitgevoerd**. Geen groen testresultaat claimen. Dit is een acceptatieblokkade voor productie, niet voor het schrijven van tests. Zie [changelog](CHANGELOG.md), [contract](ALGORITHM_CONTRACT.md), [ontwikkelhandleiding](DEVELOPER_MANUAL.md) en [index](README.md).
