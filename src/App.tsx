@@ -10,6 +10,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import { RequireSession, SessionContextProvider } from "./components/auth/SessionContext";
 import { PackagingDataProvider } from "./components/app/PackagingDataProvider";
+import { LocalPackagingDataProvider } from "./components/app/LocalPackagingDataProvider";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/test" element={<LocalPackagingDataProvider><Index /></LocalPackagingDataProvider>} />
             <Route path="/" element={<RequireSession><PackagingDataProvider><Index /></PackagingDataProvider></RequireSession>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

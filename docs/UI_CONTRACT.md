@@ -5,7 +5,9 @@ Versie 0.4. De gevraagde beheerworkflow is geïmplementeerd met Supabase. Fysiek
 ## Navigatie en layout
 Acht tabs: **Verpakking zoeken**, **Omdoos op maat**, **Palletisatie**, **Omdozenbeheer**, **Shapes masterdata**, **Packaging Definitions**, **Solutions**, **Rapporten / Exports**. **Debug / Performance** is een afzonderlijke, discrete actie. Compacte desktoplayout, responsive grids en afgebakende tabelscroll; geen bedoelde horizontale page-scroll. Tabellen hebben filters per kolom en pagina's van 25 records. Productvelden blijven uitgelijnd met meerregelige labels. Rotaties/maxima, speling/limieten en palletoverhang zijn inklapbaar.
 
-Routes blijven in `src/App.tsx`: `/` beschermd, `/login`, `/auth/callback` en `/reset-password` publiek. Email/password via Supabase Auth UI; geen sociale providers of profielvelden. Privéwerkruimte per gebruiker, geen gedeelde bedrijfsruimte of rollenmodel. Afmelden wist querycache en brengt de gebruiker naar login. Herstel bereikt eerst het wachtwoordscherm.
+Routes blijven in `src/App.tsx`: `/` beschermd, `/login`, `/auth/callback`, `/reset-password` en `/test` publiek. Email/password via Supabase Auth UI; geen sociale providers of profielvelden. Privéwerkruimte per gebruiker, geen gedeelde bedrijfsruimte of rollenmodel. Afmelden wist querycache en brengt de gebruiker naar login. Herstel bereikt eerst het wachtwoordscherm.
+
+**Lokale testmodus:** Testen zonder account opent `/test` met een afzonderlijke provider en lege records. Alle acht schermen, expliciete Excelimports, beheer/opslag/variant/actiefacties en exports werken tijdelijk in pagina-geheugen, niet in Supabase. Duidelijke banner/badge/toast, geen fictieve bronrecords of automatische overdracht. Reload/verlaten wist lokale data; exit via header waarschuwt bij bestaande records. Werkruimte-export vermeldt storageMode=local. Beschermde route en database-RLS blijven ongewijzigd.
 
 | Gebied | Functionele acties | Grenzen |
 |---|---|---|

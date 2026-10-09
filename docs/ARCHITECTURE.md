@@ -6,9 +6,14 @@ Versie 0.4. React/TypeScript/Vite, Tailwind/shadcn, React Router in `src/App.tsx
 - **Domain/packing**: types, bounds/collision/full-footprint support, ValidationJSON, search-time gewicht-/lagenconstraints, exactfilter/ranking, begrensde engine, maatwerk en pallet.
 - **Application**: workerberichtcontract en annuleerbare Web Worker. Berekening blijft lokaal.
 - **Infrastructure**: lokale lazy ExcelJS-inspectie, fysieke Zod-snapshotrevalidatie, typed database-records en veilige lokale HTML/JSON-export.
-- **UI/auth**: Supabase Auth UI, sessiemonitor, beschermde `/`, publieke login/callback/reset. Geen eigen auth-protocol of profielmodel.
+- **UI/auth**: Supabase Auth UI, sessiemonitor, beschermde `/`, publieke login/callback/reset en lokale `/test`. Geen eigen auth-protocol of profielmodel.
 - **UI/data**: PackagingDataProvider gebruikt per-gebruiker querykeys, pagineert databasefetches, levert typed records en echte mutaties/RPCs. Afmelden wist querycache.
 - **UI/screens**: compacte tabs en filterbare gepagineerde tabellen, managementcomponents, save/variant/active-flow, packingdetail en palletbron/resultaatopslag.
+
+## Lokale testwerkruimte
+`/test` mount uitsluitend LocalPackagingDataProvider, niet de Supabase-data-provider en niet RequireSession. Dezelfde schermen gebruiken een contextcontract met storageMode. `src/application/local-workspace.ts` bewaart afzonderlijke arrays in geheugen zonder Supabase-, browserstorage- of netwerkaanroepen. Imports zijn volledig gestaged vóór één commit inclusief historiek; upsert behoudt IDs, geen deletions. Ook lokaal: gevalideerde immutable snapshots, mode/context/variantregels, scoped active pointers, archiveguard en insert-only palletresultaten. Geen fictieve producten/masters of fake auth-sessie.
+
+Unmount/reload wist deze workspace. Export markeert local; geen automatische cloudsync of herstelimport. De bestaande algemene auth-sessiemonitor blijft actief, maar lokale acties lezen/schrijven geen Supabase-werkruimtegegevens. Privéroute en servergrants/RLS worden niet versoepeld.
 
 ## Databasegrens
 Zes `public.packaging_*`-tabellen met `user_id → auth.users.id`, RLS en expliciete grants. Geen anon privileges; service_role volledig server-side, nooit browsercredentials. Client CRUD is beperkt tot benodigde operations, geen hard delete. Shapes/importhistoriek worden uitsluitend door de authentieke atomische sync-RPC geschreven.
