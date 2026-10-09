@@ -1,16 +1,6 @@
 # Gebruikershandleiding
 
-Versie 0.4 met lokale testmodus. Supabase bewaart eigen masterrecords en resultaten in de privéwerkruimte; het rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
-
-## Testen zonder account
-Klik op **Testen zonder account** op het aanmeldscherm (of in de privéwerkruimte). De publieke route `/test` opent een aparte, lege lokale werkruimte met alle acht schermen.
-
-1. Voeg een eigen omdoos toe in Omdozenbeheer of importeer je Excel via expliciete mapping/preview. Je kunt ook zoeken met handmatige doosmaten.
-2. Vul eigen producten in en test verpakking zoeken, maatwerk, laagviewer en palletisatie.
-3. Maak definitions, sla solutions/varianten en palletresultaten op en probeer vergelijken, activeren en archiveren. Deze acties werken **alleen in het geheugen van de pagina**.
-4. Bewaar gewenste resultaten via JSON/HTML of download de testwerkruimte bij Rapporten / Exports vóór je herlaadt of weggaat.
-
-De banner en opslaanmeldingen geven aan dat dit lokale testdata is. Geen Supabase-werkruimtegegevens worden opgehaald of gewijzigd, ook niet als je al ingelogd bent. Geen anonymous account, localStorage/IndexedDB of automatische overdracht naar een account. Alle testgegevens verdwijnen bij herladen of verlaten; downloads blijven op je computer. Werkruimte-JSON is een export, geen herstelimport. De knop Aanmelden/Naar privéwerkruimte waarschuwt bij bestaande testrecords.
+Versie 0.4. Supabase bewaart eigen masterrecords en resultaten; het rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
 
 ## Aanmelden en werkruimte
 Meld je aan of maak een account via email/password. Bevestig je email indien Supabase dit vereist. Gebruik Wachtwoord vergeten om een herstelmail aan te vragen; de link opent een wachtwoord-update, niet de gewone startpagina. De app gebruikt een callback op de huidige app-origin. Voor een nieuw deployment moeten de absolute callback/reset-URLs in Supabase Redirect URLs zijn toegestaan.

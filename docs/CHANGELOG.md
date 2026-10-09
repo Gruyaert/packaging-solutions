@@ -1,11 +1,5 @@
 # Changelog
 
-## Lokale testmodus zonder account
-
-Gebruiker bevestigt lokale testwerkruimte. Toegevoegd: publieke `/test`-route, knop Testen zonder account op login en in privéwerkruimte, lokale badge/banner en exitwaarschuwing. LocalPackagingDataProvider gebruikt dezelfde schermen met een aparte lege memory-workspace, zonder cloud-data-provider. Lokale carton CRUD/status, expliciete shape/carton-import + atomische upsert/history, definitions, validated immutable snapshots/variants, scoped activeren/archiveren en palletopslag/export. Geen fake auth, fictieve masterdata, localStorage/IndexedDB, cloudsync of gewijzigde databasegrants. Reload/verlaten wist testrecords. Werkruimte-export onderscheidt storageMode en lokale bestandsnaam. UI-bronlabels blijven correct voor beide opslagmodi.
-
-Verificatie: source, imports, routes, context en lokale mutatie-/rollbackregels handmatig gereviewd. Nieuwe application-regressies geschreven; Vitestconfig omvat ze en source-aliases. Typecheck/build/Vitest/lint/interactieve browseracceptatie **niet uitgevoerd** in deze turn; eerdere passes hieronder zijn geen bewijs voor deze wijziging. Geen serverrestart nodig voor gewone source-edits; database ongewijzigd. Handleiding, UI-/architectuurcontract en testplan bijgewerkt.
-
 ## Werkruimte / Supabase UI (0.4)
 
 Wijziging: publishable-key Supabase-client, Auth UI/sessiebeheer/private routes/callback/reset; zes private tabellen met RLS/minimale grants, master-sync/history en active-solution RPCs, immutable owner/snapshot/context/mode/lineageguards. Acht functionele tabs en discreet debug; compact input/advanced-controls/filtertabellen; carton CRUD/status, readonly shape-import, scoped definitions en real saved solution workflows. Pallet databasebron via filtertable, gekozen patroon/source/settings/result-opslag en JSON; veilige HTML-laagrapporten en volledige eigen werkruimte-export. Search-time totaalproductgewicht/global-Z-lagenlimieten en regressietests. Relevante contracten/handleidingen bijgewerkt.

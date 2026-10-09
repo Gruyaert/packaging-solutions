@@ -22,7 +22,6 @@ async function loadRecords(userId: string): Promise<PackagingRecords> {
   return Object.fromEntries(entries) as unknown as PackagingRecords;
 }
 interface DataContext {
-  storageMode: "supabase" | "local";
   records: PackagingRecords; loading: boolean; error: string; busy: boolean;
   refresh(): Promise<void>;
   write(kind: "cartons" | "definitions" | "solutions" | "pallets", values: Record<string, unknown>, id?: string): Promise<{ id: string } | undefined>;
@@ -30,8 +29,8 @@ interface DataContext {
   activate(id: string): Promise<boolean>;
   saveSolution(snapshot: Snapshot, name: string, definitionId: string | null, basedOn?: string, sourceMode?: "search" | "custom"): Promise<{ id: string } | undefined>;
 }
-export const PackagingDataContext = createContext<DataContext | null>(null);
-export function usePackagingData() { const value = useContext(PackagingDataContext); if (!value) throw new Error("PackagingDataProvider ontbreekt."); return value; }
+const Context = createContext<DataContext | null>(null);
+export function usePackagingData() { const value = useContext(Context); if (!value) throw new Error("PackagingDataProvider ontbreekt."); return value; }
 export function PackagingDataProvider({ children }: { children: ReactNode }) {
   const { session } = useSession(), queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -67,5 +66,5 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
       return write("solutions", { name: name.trim(), definition_id: definitionId, packaging_mode: packagingMode, metadata: parent?.metadata ?? {}, based_on: basedOn ?? null, snapshot: { contractVersion: "0.3", ...parsed }, status: "draft", created_from: basedOn ? "variant" : sourceMode === "custom" ? "custom" : "packing" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Ongeldige solution."); return undefined; }
   }
-  return <PackagingDataContext.Provider value={{ storageMode: "supabase", records: query.data ?? empty, loading: query.isLoading, error: query.error?.message ?? "", busy, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;
+  return <Context.Provider value={{ records: query.data ?? empty, loading: query.isLoading, error: query.error?.message ?? "", busy, refresh, write, sync, activate, saveSolution }}>{children}</Context.Provider>;
 }

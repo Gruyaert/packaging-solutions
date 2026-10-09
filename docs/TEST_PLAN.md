@@ -1,15 +1,8 @@
 # Testplan
 
-Versie 0.4 met lokale testmodus. B4 is bron van onderstaande golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.4. B4 (huidige gebruikersprompt) is bron van onderstaande golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
 
-## Lokale testmodus — nieuwe regressies en acceptatie
-[local-workspace.test.ts](../src/application/local-workspace.test.ts) bevat afzonderlijke lege instanties, upsert-ID/no-delete, atomic importrollback bij invalid/duplicate, shape-keydefinitie, immutable inputclone/variant/actiefpointer/archiveguard en mode/contextweigering. Vitestconfig omvat nu applicationtests en source-aliasresolutie. Tests geschreven, **niet uitgevoerd** in deze turn.
-
-Browseracceptatie nog open: klik Testen zonder account zonder sessie; probeer handmatige carton CRUD, echte XLSX-mapping/preview/historiek, beide packingmodi, save/open/duplicate/recalc/compare/activate/archive, pallet-opslag en downloads. Controleer banner/meldingen, storageMode=local in export, lege workspace na reload/exit en geen Supabase-table/RPC-netwerkrequests. Herhaal met bestaande login: private records niet zichtbaar in testmodus, private cloudrecords ongewijzigd na terugkeer. Geen testdata vanuit fixtures in productie invoegen.
-
-Werkelijke lokale-modusverificatie: source/imports/routeselectie en mutatie-/rollbacklogica handmatig nagelezen. Geen uitvoertool voor TypeScript/build/Vitest of interactieve browsercontrole beschikbaar in deze turn; onderstaande geslaagde 0.4-checks zijn historisch en niet nieuw bewijs voor lokale modus.
-
-## Eerdere 0.4-verificatie en nieuwe acceptatie
+## Actuele 0.4-verificatie en nieuwe acceptatie
 - Projectbrede TypeScriptcheck: uitgevoerd, geslaagd na correctie van de ExcelJS cell.col-conversie.
 - Database audit: alle zes tabellen RLS=true; anon SELECT=false, geen client DELETE; shapes/imports geen directe client INSERT/UPDATE, pallets INSERT-only; own-user policies en service-role grants aanwezig.
 - Productiebuild: zie actuele changelog; unit/lint/browseracceptatie niet uitgevoerd.
