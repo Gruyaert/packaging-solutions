@@ -34,6 +34,23 @@ Risico's: groter lazy parserbundle; alleen vertrouwde kleine bestanden; limieten
 - Typecheck/build/lint/browser: niet uitgevoerd; huidige tools bieden geen uitvoering/browserbesturing. Eerdere geslaagde 0.1-checks niet hergebruikt als bewijs voor 0.2.
 - Inspectietests I01–I08: gedefinieerd, niet uitgevoerd.
 - Echte Shapes/Omdozen-inhoud/checksum: nog niet gelezen door assistent; lokale bestandsselectie + bewust gedeeld rapport nodig voor contractmapping. Geen headers of records verzonnen.
-- GitHub push/PR: niet uitgevoerd. Nieuwe commit-hash niet geverifieerd.
+- Lokale0.2commit: bf01841d8901b3c3630e325e06731a0efaa343f5 volgens gespreksprovenance; geen push/PR-bewijs.
+
+## Vervolgwijziging · Packing, maatwerk en palletisatie (0.3)
+Datum: niet onafhankelijk vastgesteld in deze turn.
+
+Wijziging: nieuw algoritmecontract vóór implementatie, pure domain-engine/geometry/validation/scoring/custom/pallet, worker, productinvoer, strategie/exactfilter, ecologische ranking, restmetadata, read-only laagviewer/placementtabel, v0.3 JSON snapshot/export/revalidatie, palletpanel en patroonmetrics. Excelinspectie behouden. Vitest5.0.3 geïnstalleerd; test/test:watch/typecheck scripts en onafhankelijke Node-testconfig toegevoegd. UI-fasestatus0.3 bijgewerkt. Geen router/server/database/CSS-wijzigingen.
+Waarom: expliciete nieuwe gebruikersregels B4 autoriseren enginebouw; geen fictieve bronmappings.
+Impact: handmatige echte input berekenen; geen persistentie/database/CERM/version-editor. Maatwerk één product alleen lineaire patronen, multi exact en geometrisch gecontroleerd. Overhang per zijde, karton/buitenmaten en topclearance consistent in engine/viewer/snapshot.
+Risico's: begrensde heuristische zoekdekking, homogene rotatie/product/poging, conservatieve volledige support en restscoreheuristiek. Maxima-definitie en scoreformule vereisen operatorreview. Pallet geen draagkracht-/transportstabiliteitscertificaat. Database-recordbron alleen adapter/handmatige UI, geen gekoppelde DB. Compressibility/Editor later.
+
+### Werkelijke verificatie0.3
+- Algoritmecontract gelezen en bijgewerkt vóór enginebouw; benodigde documenten/modellen samen bijgewerkt.
+- Vitest-installatie succesvol door dependencybeheer gemeld.
+- G01–G07 en fysieke regressies geschreven als uitvoerbare tests, met B4-fixtures en expliciete verwachtingen.
+- Code/imports/workerpad/geometrie/testverwachtingen handmatig gereviewd; bron bestanden teruggelezen. Geen globale optimaliteitsclaim.
+- Vitest/typecheck/build/lint/browser: **niet uitgevoerd**, huidige tools bieden geen command- of browseruitvoering; eerdere succesvolle builds niet als0.3bewijs gebruiken. Productieacceptatie blijft hierdoor open.
+- Originele Excelbytes niet gewijzigd of gepubliceerd; geen echte Excelheaders/products/solutions verzonnen. Tests bevatten uitsluitend expliciete fixtures.
+- Geen GitHub-push/PR geclaimd; huidige nieuwe commit-hash niet geverifieerd.
 
 Zie [testplan](TEST_PLAN.md), [besluiten](DECISION_LOG.md) en [index](README.md).

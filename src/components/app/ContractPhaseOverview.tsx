@@ -15,7 +15,7 @@ const principles = [
 const evidence = [
   { id: "Q01", title: "Werkbladinhoud en Excelmapping", detail: "Headers, celtypen, formules, sleutels en eenheden zijn nog niet onderzocht." },
   { id: "Q02", title: "Screenshots en functionele voorbeelden", detail: "Nodig om de oorspronkelijke interface te reconstrueren." },
-  { id: "Q05–Q07", title: "Geometrie en echte zoekuitkomsten", detail: "Geen enginekeuze zonder onderbouwde regels en golden voorbeelden." },
+  { id: "Q06–Q07", title: "Productievalidatie en zoekdekking", detail: "Gebruikersregels zijn geïmplementeerd; support- en rankingheuristieken vereisen operatorreview." },
   { id: "Q10–Q11", title: "Bronopname en GitHub-beleid", detail: "Toestemming, remote, rechten en branch-/PR-werkwijze moeten worden bevestigd." },
 ];
 
@@ -40,8 +40,8 @@ export function ContractPhaseOverview() {
       <section aria-label="Actuele fasestatus" className="flex flex-col gap-4 rounded-2xl border border-primary/20 bg-accent p-5 sm:flex-row sm:items-start sm:p-6">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-primary"><LockKeyhole aria-hidden="true" className="size-5" /></span>
         <div>
-          <h2 className="font-semibold text-accent-foreground">Contractfase — optimalisatie nog niet beschikbaar</h2>
-          <p className="mt-1 text-sm leading-relaxed text-accent-foreground">Lokale Excel-inspectie is beschikbaar. Er is nog geen engine, productie-import, database, CERM-koppeling, solutionbewerking, 3D-renderer of productie-export.</p>
+          <h2 className="font-semibold text-accent-foreground">Enginefase — heuristische packing beschikbaar</h2>
+          <p className="mt-1 text-sm leading-relaxed text-accent-foreground">Packing, maatwerk, palletisatie, laagviewer en lokale JSON-snapshots zijn beschikbaar. Database/CERM, productie-import en Solution Editor blijven afzonderlijke vervolgstappen.</p>
         </div>
       </section>
 

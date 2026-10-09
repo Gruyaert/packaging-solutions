@@ -1,20 +1,20 @@
 # Verpakkingsoptimalisatie
 
-**Contractfase — optimalisatie nog niet beschikbaar.** Basis voor reconstructie, zonder fictieve packingresultaten.
+Enginefase0.3: productinvoer → concrete packingplacements → gevalideerde solutions → maatwerkdozen/palletisatie. Geen fictieve demoresultaten, geen globale optimaliteitsclaim.
 
-## Nu beschikbaar: originele Excelbestanden inspecteren
-Klik bovenaan de app op **Excelbestanden inspecteren** en selecteer Shapes.xlsx en Omdozen.xlsx. Lokale read-only inspectie toont werkbladen, broncellen/celtypen, formules/cache, lege rijen, samengevoegde bereiken en expliciete sleutelcontroles. Een volledig JSON-inspectierapport kan worden gedownload en bewust gedeeld voor mappinganalyse.
+## Beschikbaar
+- Maximaal5 producten, zes selecteerbare rotaties, g/kg met3decimalen, rij-/kolom-/laagmaxima.
+- Gewenste aantallen en minimaal lucht/vullen; exactfilter apart, afwijkende oplossingen blijven behouden.
+- Single-product lineair maatwerk; multi-product echte packing, realiteitsfilter inclusief kartondikte.
+- Praktisch/ecologisch60/40 met zwaar gewicht voor lucht/transportvolume, restmetadata.
+- ValidationJSON, read-only laagviewer/placementtabel en lokale v0.3 JSON-snapshots.
+- Palletisatie met 0/90/meng/ondersteunde alternerende patronen, buitenmaten, overhang en metrics.
+- Bestaande lokale XLSX-inspectie, geen CSV-conversie vereist.
 
-Geen CSV-conversie of andere chat nodig. Geen serverupload, opslag of automatische Git-opname. SHA-256 via Web Crypto indien beschikbaar. Technische inspectie is geen gevalideerde masterimport; projectbronmapping blijft open totdat de echte resultaten worden beoordeeld. Chatbijlagen worden niet automatisch in de preview geladen.
+Engine puur TypeScript los van React; zoeken in annuleerbare Web Worker. Vitest golden fixtures voor alle7feedbackcases plus regressies. Zoek/placementlimieten worden expliciet gemeld; tests/build/typecheck in deze turn niet uitgevoerd wegens ontbrekende uitvoertool.
 
-Nog niet beschikbaar: packing-engine, productie-import, database, CERM, definitieve solutionbewerking, 3D en operationele exports. Bronopname/GitHub-beleid blijven open.
+Database/CERM, gecontroleerde productie-masterimport, persistente versionering/CurrentSolutionID, Solution Editor, compressie en3D blijven afzonderlijke vervolgstappen. Pallet-Boxadapter accepteert doosrecords; UI heeft handmatige buitenmaat zolang database niet gekoppeld is. Gewicht/draagkracht/transportstabiliteit niet gecertificeerd.
 
-- [Documentatie-index](docs/README.md)
-- [Gebruikershandleiding](docs/USER_MANUAL.md)
-- [Ontwikkelhandleiding](docs/DEVELOPER_MANUAL.md)
-- [Inspectiecontract](docs/IMPORT_EXPORT.md)
-- [Bronregister](docs/sources/README.md)
-- [Open vragen](docs/OPEN_QUESTIONS.md)
-- [Verificatiestatus](docs/CHANGELOG.md)
+[Gebruik](docs/USER_MANUAL.md) · [Contract](docs/ALGORITHM_CONTRACT.md) · [Tests](docs/TEST_PLAN.md) · [Ontwikkeling](docs/DEVELOPER_MANUAL.md) · [Documentatie](docs/README.md) · [Changelog](docs/CHANGELOG.md) · [Vragen](docs/OPEN_QUESTIONS.md)
 
-React 19, TypeScript, Vite, React Router, Tailwind/shadcn en lazy ExcelJS 4.4.0. Routes blijven centraal in src/App.tsx. Geen backend. Gewenste GitHub-bron: https://github.com/Gruyaert/packaging-solutions; geen publicatieclaim zonder verificatie.
+React19/TypeScript/Vite/Tailwind/shadcn; routes in src/App.tsx. Geen backend. GitHub-opname/rechten/publicatie niet geverifieerd, geen push/PR geclaimd.

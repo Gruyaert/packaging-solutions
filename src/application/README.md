@@ -1,7 +1,5 @@
 # application
 
-Status: **voorlopig voorstel** voor modulegrens; functionele vereisten **bevestigd** volgens plan. Implementatiedetails **open**.
+packing-job.ts bevat het workerberichtcontract; packing.worker.ts roept pure domainfuncties aan. UI termination annuleert zonder main-thread blokkade; publieke engine biedt AbortSignal. Geen service/repository voor hypothetische database. Contextresolutie/variantmaken/actiefkeuze later afzonderlijke use-cases.
 
-Toekomstige use-cases: context ophalen, resolutie, zoeken, nieuwe solutionvariant maken en actieve variant kiezen. Variantmaken en actiefkeuze gescheiden. Geen infrastructuurdetails of rendertransforms. Deze fase implementeert geen services.
-
-Zie [architectuur](../../docs/ARCHITECTURE.md), [datamodel](../../docs/DATA_MODEL.md), [regels](../../docs/ALGORITHM_CONTRACT.md), [open vragen](../../docs/OPEN_QUESTIONS.md) en [documentatie-index](../../docs/README.md).
+Zie [architectuur](../../docs/ARCHITECTURE.md), [contract](../../docs/ALGORITHM_CONTRACT.md) en [ontwikkeling](../../docs/DEVELOPER_MANUAL.md).

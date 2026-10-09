@@ -1,17 +1,26 @@
 # Besluitlog
 
-Versie 0.2. Bronnen: B1, repository-observaties en expliciete gebruikersvraag om pragmatisch verder te gaan. Geen verborgen enginekeuze.
+Versie0.3. Bronnen B1/B2 en B4 huidige packingprompt. Status **bevestigd** voor vereisten; algoritmische keuzes zijn **voorlopig voorstel** voor verdere productievalidatie.
 
-| ID / status | Besluit en context | Alternatief | Motivatie / gevolgen |
-|---|---|---|---|
-| D01 bevestigd | geen engine/demoresultaten zonder bewijs | generieke packing-demo | hulpmiddelen uitbreiden mag; domeinregels verzinnen niet |
-| D02 voorlopig voorstel | vier modulegrenzen | lege engine/repositorylaag | alleen concrete behoefte implementeren; infrastructure bevat nu inspectie-adapter |
-| D03 bevestigd | originele bronnen niet gewijzigd of in Git opgenomen | direct kopiëren | Q10 toestemming/gevoeligheid open |
-| D04 vervangen door D09 | oorspronkelijke beperking: geen XLSX-runtime voor informatief skelet | inspectiebibliotheek toevoegen | gebruiker vraagt expliciet pragmatisch door te gaan; fasegrens geen keurslijf |
-| D05 voorlopig voorstel | read-only renderstate, variant-/actiefacties apart | mutabele placements | ondersteunt R06–R08; geen renderer/engine nu |
-| D06 voorlopig voorstel | mobile-first blauw/teal skelet | Zite zonder screenshots namaken | Q02 blokkeert reconstructie |
-| D07 bevestigd | geen GitHub-publicatieclaim zonder bewijs | main als remotebewijs | remote/rechten/branchbeleid Q11 open |
-| D08 open | opslag appdata/CERM | Git als operationele database of DB kiezen | Q09 ontbreekt; geen integratie |
-| D09 bevestigd als implementatiekeuze | ExcelJS 4.4.0 lazy browserinspectie + Web Crypto SHA-256 | gebruiker CSV laten maken of serverreader | origineel XLSX direct bruikbaar, geen upload/persistentie/bronpublicatie; grotere lazy dependency; alleen vertrouwde kleine bronnen; parsing is geen mappingbewijs |
+| ID | Status | Besluit / context | Alternatief | Gevolgen |
+|---|---|---|---|---|
+| D01 | vervangen door D10 | oude engineblokkade zonder bewijs | blijven wachten | B4 geeft nu concrete fysieke regels en toestemming |
+| D02 | bevestigd als structuur | concrete modulegrenzen | lege abstractions | domain-packing pure functies, geen React/IO |
+| D03 | bevestigd | originele bronnen niet gewijzigd/Git-gepubliceerd | direct kopiëren | Q10 blijft open |
+| D04 | vervangen door D09 | oorspronkelijk geen XLSX-runtime | pragmatische reader | inspectie toegevoegd |
+| D05 | bevestigd invariant | read-only placements, varianten/actief apart | mutabele viewer/history | laagviewer/snapshot blijft truth; Editor/versionering later |
+| D06 | voorlopig voorstel | eigen mobile-first blauw/teal UI | Zite namaken zonder screenshots | geen reconstructieclaim |
+| D07 | bevestigd | geen GitHub-claim zonder remote/rechtenbewijs | main als bewijs | Q11 blijft open |
+| D08 | open | operationele appdata/CERM | database kiezen | geen persistente integratie |
+| D09 | bevestigd implementatie | lazy ExcelJS lokale inspectie | CSV/andere chat verplicht | originele XLSX bruikbaar, geen upload |
+| D10 | bevestigd door B4 | packing/maatwerk/palletisatie nu implementeren | skelet behouden | eerdere verbod vervalt, ontbrekende domeinregels niet verzinnen |
+| D11 | voorlopig voorstel | extreme-point greedy, diverse volgorde/rotaties, bounded | dure exhaustieve optimizer | valide gevonden resultaten, geen globale optimaliteitsclaim; truncatie zichtbaar |
+| D12 | voorlopig voorstel | volledige footprint union-support, epsilon1e-6 | fractionele steun/materialen | conservatief; fysiek geldig geometrisch, operatorreview nodig |
+| D13 | voorlopig voorstel | maxima tellen unieke x/y-origins per product/laag en z-levels | rij-/kolomdefinitie per dominant patroon | eenduidige mixed-product validatie; nader bevestigen |
+| D14 | voorlopig voorstel | ecology=gemiddelde binnen-/buitenvolume-efficiëntie; scoreecology×(0.6ecology+0.4handling),75%-band | puur netheid of alleen lucht | lucht én transportvolume zwaar; te ruime dozen zakken |
+| D15 | voorlopig voorstel | geïsoleerde singleton buiten dominante verbonden rastercluster markeren; compacte aangesloten rest niet | alle laatste rijstuks rest noemen | ook losse rest op dezelfde rij/kolom detecteren; conservatief, Editor later |
+| D16 | bevestigd implementatie | worker/terminate-annulering, Vitest pure tests | blocking UI/geen tests | responsief,7golden cases uitvoerbaar; uitvoering niet geclaimd |
+| D17 | voorlopig voorstel | buitenmaten=binnen+2karton; pallet grids/guillotine + gedragen alternatie | alleen volumequotient | geometrische patterns, geen dragkracht-/transportcertificaat |
+| D18 | bevestigd implementatie | v0.3 JSON snapshot lokaal, schema+fysieke revalidatie | vertrouwen op ingelezen score/validation | viewer/export behouden placements; geen database/CERM-write |
 
-Nieuwe inspectiefunctionaliteit en dependency in dezelfde wijzigingsset gedocumenteerd. Zie [vragen](OPEN_QUESTIONS.md), [architectuur](ARCHITECTURE.md), [import](IMPORT_EXPORT.md) en [index](README.md).
+Zie [contract](ALGORITHM_CONTRACT.md), [tests](TEST_PLAN.md), [vragen](OPEN_QUESTIONS.md), [changelog](CHANGELOG.md) en [index](README.md).

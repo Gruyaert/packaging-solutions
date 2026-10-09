@@ -1,9 +1,18 @@
 # Datamodelcontract
 
-Contractversie 0.1. **Bevestigd** = vereiste uit B1 (goedgekeurd plan), niet Excelmapping. **Voorlopig voorstel** = technische representatie. **Open** = onbekend; geen uitvoerbaar schema.
+Contractversie0.3. **Bevestigd** = vereiste uit B1/B4; geen Excelmapping. **Voorlopig voorstel** = technische representatie/heuristiek. **Open** = onbekend.
 
-## Veldregister
-Types string, object, number en array hieronder zijn **voorlopig voorstel**, ook bij bevestigde veldnamen. Exacte bronceltypen, nullbeleid, lengte en eenheden zijn open. Verplichtheid betreft logisch contract, niet een Excelkolom. Bron B1 tenzij anders vermeld.
+## Nieuw fysiek enginecontract (B4, leidend boven oude voorstellen)
+[types.ts](../src/domain/packing/types.ts) is uitvoerbaar: Product met productId/reference,length/width/height(mm),weightKg,quantity,rotations,maxInLength/maxInWidth/maxLayers. Product-ID is lokaal stabiel, niet automatisch ProductNumber/CERM-key. compressibilityX/Y/Z optioneel gereserveerd, niet toegepast.
+
+Placement heeft verplichte placementId/productId,x/y/z,length/width/height (finite numbers in mm),orientation (een van zes labels),layerIndex (niet-negatief integer). Fysieke dimensies zijn georiënteerde nominale maten; bronproduct bewaart oorspronkelijke L/B/H. Dit vervangt onderstaande oude position/nominalDimensions/orientation-objectvoorstellen. Coördinaten X=L,Y=B,Z=H; z begint0. Spacing.length/width totaal, gelijke halve rand; spacing.height uitsluitend bovenaan.
+
+Box is een engine-inputadapter met boxId/reference, interne length/width/height en cardboard(mm), niet de bevestigde Excel-doosentiteit. Buitenmaat=binnen+2karton. Solution bevat solutionId/box/spacing/placements/ValidationJSON/counts/utilization/air/transportEfficiency/weightKg/practicalScore en metadata.restPlacementIds/handlingScore/pattern. Scores zijn afgeleid, nooit fysieke waarheid. Geen muterende solutionbewerking ingevoerd.
+
+Snapshotcontract0.3: {contractVersion,products,solution}; lokaal JSON met volledige placements/speling. Bij reimport schema én geometrie opnieuw valideren, afgeleide scores herberekenen. Geen CurrentSolutionID-owner, shape-resolutie of databaseversionering impliciet toevoegen. Palletinput gebruikt Box buitenmaten uit adapter/solution/saved snapshot; settings meten mm en overhang per zijde, resultaten concrete doosplacements plus counts/hoogte/benutting/score.
+
+## Eerder masterdata-/opslagveldregister (voorstellen; fysieke enginevelden hierboven gaan voor)
+Types hieronder blijven voorstellen voor masterdata/opslag, niet Excelkolommen. Bron B1 tenzij B4 hierboven specificeert. Referentieel sleutelbeleid en eigenaar blijven open.
 
 | Entiteit / veld | Betekenis, typevoorstel | Verplicht / sleutel / relatie | Mutabiliteit en validatie | Status / vraag |
 |---|---|---|---|---|

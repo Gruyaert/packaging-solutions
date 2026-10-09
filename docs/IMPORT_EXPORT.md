@@ -17,7 +17,10 @@ Alleen vertrouwde XLSX tot 5 MB; maximaal 20.000 rijen en 256 kolommen per werkb
 ## Nog te bevestigen (Q01, Q05)
 Headers/eenheden/semantiek, exacte doosentiteit, relaties en gevalideerde keys pas na beoordeling van werkelijk gedeelde rapporten. Technisch uitlezen is niet hetzelfde als goedgekeurde mapping of masterimport. Geen automatische schatting van eenheden.
 
+## Lokale solution-snapshots (0.3)
+Een gegenereerde solution kan als {contractVersion:"0.3",products,solution} worden gedownload. Placements, interne doosmaten, kartondikte en speling blijven fysiek ongewijzigd. Laagviewer/ranking maakt geen afgeleide exportcoördinaten. Opgeslagen snapshot als palletbron: lokaal bestand maximaal5MB, Zod-vorm/finite-number controle plus fysieke domainrevalidatie; scores/ValidationJSON opnieuw afleiden. Geen productieformat/CERM-write/databaseopslag. Rapport/snapshot kan vertrouwelijke gegevens bevatten.
+
 ## Toekomstige productieflow — voorstel
-Bronherkomst vastleggen na toestemming → expliciete mapping-preview → schema-/keyvalidatierapport per werkblad/rij/veld → goedgekeurde masterrevisie, gescheiden van eigen appdata. Shapes niet vrij overschrijven; appdata niet als CERM-master terugschrijven (R14–R15). Importvervanging/verwijderingsbeleid/exportformats open Q08, opslag Q09, Git-opname Q10. Geen productie-import of operationele exports geïmplementeerd.
+Bronherkomst vastleggen na toestemming → expliciete mapping-preview → schema-/keyvalidatierapport per werkblad/rij/veld → goedgekeurde masterrevisie, gescheiden van eigen appdata. Shapes niet vrij overschrijven; appdata niet als CERM-master terugschrijven (R14–R15). Importvervanging/verwijderingsbeleid/productie-exportformats open Q08, opslag Q09, Git-opname Q10. Geen productie-masterimport geïmplementeerd.
 
 Zie [gebruik](USER_MANUAL.md), [data](DATA_MODEL.md), [tests](TEST_PLAN.md), [vragen](OPEN_QUESTIONS.md) en [index](README.md).

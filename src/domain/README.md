@@ -1,7 +1,5 @@
 # domain
 
-Status: **voorlopig voorstel** voor modulegrens; functionele vereisten **bevestigd** volgens plan. Implementatiedetails **open**.
+Packingmodule0.3 bevat pure TypeScript types, geometrie/support, ValidationJSON, ranking/restmetadata, exactfilter, engine, maatwerk en palletisatie. Geen React/IO. Golden tests draaien in Node via Vitest. Shape-master/resolutie/operationele versionering nog niet geïmplementeerd.
 
-Toekomstige domeinentiteiten, samengestelde keys, override-resolutie en invarianten R01–R15. Geen React, renderer of IO. Deze fase bevat alleen deze grensbeschrijving; geen lege engine of onbewezen domeintypes.
-
-Zie [architectuur](../../docs/ARCHITECTURE.md), [datamodel](../../docs/DATA_MODEL.md), [regels](../../docs/ALGORITHM_CONTRACT.md), [open vragen](../../docs/OPEN_QUESTIONS.md) en [documentatie-index](../../docs/README.md).
+Zie [contract](../../docs/ALGORITHM_CONTRACT.md), [tests](../../docs/TEST_PLAN.md), [data](../../docs/DATA_MODEL.md) en [architectuur](../../docs/ARCHITECTURE.md).

@@ -1,6 +1,6 @@
 # Documentatie · Verpakkingsoptimalisatie
 
-Contractversie 0.1 · basisfase, geen optimalisatie-engine.
+Contractversie0.3 · heuristische packing, maatwerk, palletisatie en lokale broninspectie. Productieopslag/mastermapping nog open. B4 = nieuwe expliciete gebruikersprompt voor enginefeedback; deze vervangt het oude implementatieverbod en bevestigt assen, mm, speling, rotaties en golden verwachtingen.
 
 ## Index: twaalf verplichte documenten
 1. [Deze index](README.md)

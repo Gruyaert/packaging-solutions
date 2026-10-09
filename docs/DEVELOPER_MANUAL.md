@@ -1,27 +1,33 @@
 # Ontwikkelhandleiding
 
-Versie 0.2. **Bevestigd**: React 19/TypeScript/Vite en ExcelJS 4.4.0 voor lokale inspectie. **Voorlopig voorstel**: fasering. **Open**: opslag, mapping en publicatievoorwaarden.
+Versie 0.3. React19/TypeScript/Vite, centrale routes in src/App.tsx, Tailwind/shadcn, ExcelJS4.4.0 en Vitest. De nieuwe gebruikersspecificatie autoriseert packing zonder te wachten op ontbrekende Zite-enginebewijs; geen claim op volledige reconstructie.
 
-## Omgeving en scripts
-Dyad verzorgt dependency-installatie en Vite-preview; gewone edits gebruiken hot reload. package.json definieert dev, build, build:dev, preview en lint. Geen npm-testscript/testframework toegevoegd. ExcelJS 4.4.0 geïnstalleerd via dependencybeheer; browserondersteuning maakt server/DB onnodig voor inspectie. ExcelJS wordt dynamisch geladen bij bestandskeuze, niet in de hoofdweergave. Typecheck/build/lint alleen claimen bij daadwerkelijke uitvoer; deze turn biedt geen uitvoertool voor die checks.
+## Scripts en modules
+Package-scripts: dev/preview, build/build:dev, lint, typecheck (tsc --noEmit), test (vitest run --config src/vitest.config.ts), test:watch. Dyad beheert installatie/preview; gewone edits gebruiken hot reload. Geen backend/database opgezet. Tests hebben Nodeomgeving, geen React of appplugins.
 
-## Modules en wijzigingen
-Routes blijven in src/App.tsx. Index gebruikt AppShell, ContractPhaseOverview en ExcelInspector. Infrastructure bevat nu inspect-workbook.ts; domain/application/visualization behouden alleen module-README's. Geen engine/repositorylaag. UI-toestand alleen React-geheugen; File/ArrayBuffer niet naar public, opslag of API. globals.css/config ongewijzigd in 0.2. Zie [architectuur](ARCHITECTURE.md) en [inspectiecontract](IMPORT_EXPORT.md).
+Domain packing:
+- types.ts: fysieke datatypes, rotaties, eenheden en systeemgrensvalidatie.
+- geometry.ts: AABB-overlap, symmetrische bounds, coplanaire union-support, maxima en lagen.
+- validation.ts: ValidationJSON.
+- scoring.ts: restdetectie, ecologische score, sortering en apart exactfilter.
+- engine.ts: deterministische begrensde extreme-point zoekstrategie.
+- custom-box.ts: lineair en echt multi-product maatwerk; karton/realiteitsfilter.
+- pallet.ts: bronadapter, buitenmaten, overhang, grid/guillotine/gedragen alternatie.
+- packing.test.ts: golden fixtures en regressies.
 
-Checklist: bron/status; relevante contracten; R/U/T-koppelingen; Q-blokkades; besluiten/changelog met echte teststatus; links; typecheck/build indien uitvoerbaar. Accepted hash-snapshots niet wijzigen, voortgang alleen in werkplan. Lokale parsing is geen gevalideerde masterimport.
+Application: packing-job.ts berichtcontract; packing.worker.ts rekent in Web Worker. UI kan terminate() gebruiken om direct te annuleren; publieke engine accepteert AbortSignal. Worker rekent maximaal96 pogingen/300 placements, geometrisch budget250.000 geschatte pairchecks per poging. Default pure API48/200. Pallet max100 snijposities/as,1000 dozen/laag,3000 totaal; overschrijding expliciete fout. Geen gedeeltelijke maatwerkoplossing als alle gevraagde producten niet passen.
 
-## GitHub-workflow
-Gewenste bron: https://github.com/Gruyaert/packaging-solutions. Geobserveerd: lokale main, aanvankelijk schoon, HEAD 9435ceb62ca691d942610c9838c7d439d850f8f2. Geen remote/rechten verifieerbaar met huidige tools (Q11). Voor publicatie: remote vaststellen, rechten controleren, gewenste doelbranch/PR en beschermingsregels bevestigen, Q10 voor bronbytes oplossen. Geen automatische push of PR. Dyad beheert de lokale commit aan het einde van de wijziging; deze sessie maakt geen eigen commits. Hash pas na verifieerbaar commitresultaat rapporteren. Lokaal werk is geen GitHub-publicatie.
+Infrastructure: bestaande lokale XLSX-inspectie; solution-snapshot.ts valideert v0.3 JSON via Zod én fysiek opnieuw, vertrouwt geen meegeleverde ValidationJSON/score. Export en viewer wijzigen placements niet. Geen persistente opslag. UI omvat ProductInputs/PackingWorkbench/SolutionDetails/PalletPanel; Index behoudt Excelinspectie en bronstatus.
 
-## Gefaseerd vervolg en acceptatie (voorlopig voorstel)
-| Fase | Acceptatiecriterium | Vereiste docs-update / blokkade |
-|---|---|---|
-| 1 Excelmapping/schema | beide werkbladen volledig geïnventariseerd; keys/typen/eenheden gevalideerd; discrepanties gerapporteerd | sources, DATA_MODEL, IMPORT_EXPORT, TEST_PLAN; Q01/Q10/Q12 |
-| 2 Masterdata en aparte appopslag | gecontroleerde masterrevisie; productoverride-only geldig; opslag/CERM-grens goedgekeurd; geen masteroverschrijving | ARCHITECTURE, DATA_MODEL, DECISION_LOG; Q03/Q09 |
-| 3 Solutionversionering | T03/T06/T07 uitvoerbaar en groen; owner/actiefpointer bewezen | DATA_MODEL, UI_CONTRACT, TEST_PLAN; Q04 |
-| 4 Onderbouwde packing-engine | geometrie en zoek/rankingcontract bevestigd; echte golden tests reproduceerbaar; geen generieke vervanging | ALGORITHM_CONTRACT, TEST_PLAN, DECISION_LOG; Q05–Q07 |
-| 5 Read-only visualisatie | iedere placementwaarde onveranderd bij alle visuele acties; assen en bediening bewezen | UI_CONTRACT, ARCHITECTURE, TEST_PLAN; Q02/Q06 |
-| 6 Import/export | beleid goedgekeurd; preview/rapport/mapping en foutafhandeling getest; geen stil dataverlies | IMPORT_EXPORT, USER_MANUAL, TEST_PLAN; Q08 |
-| 7 Regressie/productievalidatie | golden suite, browser/a11y, prestaties en autorisatie aantoonbaar; gebruikersacceptatie | alle contracten, CHANGELOG; Q07/Q09/Q13 |
+## Enginekeuzes/review
+Heuristisch, niet exhaustief. Homogene rotatie per product per poging; maxima als aantal x/y-startposities per product/laag en z-niveaus. Volledige steun, geen materiaalcertificaat. Score60/40 met volumegewicht/benuttingsband; restheuristiek conservatief. Alle keuzes in [algoritmecontract](ALGORITHM_CONTRACT.md), wijzigingen met golden tests onderbouwen. Geen stil verkleinen van producten; compressibility pas later.
 
-Elke fase vereist eigen review en actuele docs, geen toestemming voor volgende fase door dit skelet. Zie [index](README.md), [tests](TEST_PLAN.md) en [vragen](OPEN_QUESTIONS.md).
+## Verificatie en docs
+Voer test/typecheck/build/lint uit via beschikbare omgevingacties indien uitvoerbaar. Deze turn bevat geen command-/browsertool: geen geslaagde checks claimen. Voor productie: browser/a11y, performance, operatorreview, echte input-outputvoorbeelden en rapportage van limieten.
+Elke wijziging: relevante contracten, veldmodel, tests, besluiten en changelog samen bijwerken. Hash-versioned accepted plans nooit wijzigen; werkplan mag voortgang registreren.
+
+## Opslag/GitHub
+Database-adapter neemt een doosrecord aan, maar er is geen echte databasekoppeling. UI gebruikt actieve solution, gevalideerd lokaal snapshot of handmatige buitenmaten. Voor productieopslag/eigenaar/CurrentSolutionID/variants eerst Q04/Q09 oplossen. GitHub alleen broncode/contracten, niet automatisch appdata/CERM. Remote/rechten/branchbeleid Q11 onbekend; bronopname Q10 wacht op toestemming. Geen push/PR geclaimd. Lokale eerdere commit bf01841d8901b3c3630e325e06731a0efaa343f5 volgens gespreksprovenance.
+
+## Vervolgacceptatie
+Excelmapping: echte sheets/keys/eenheden gevalideerd. Master/opslag: gecontroleerde revisies en eigenaar/mergebeleid. Versionering: T03/T06/T07 groen. Engine: golden suite uitgevoerd, performance/heuristieken operatorreview. Visualisatie: read-only regressies, later3D. Import/export: productieformaten/beleid goedgekeurd; huidige snapshots niet CERM-master. Productie: golden/browser/a11y/autoristatiebewijs. Zie [tests](TEST_PLAN.md), [vragen](OPEN_QUESTIONS.md), [architectuur](ARCHITECTURE.md) en [index](README.md).

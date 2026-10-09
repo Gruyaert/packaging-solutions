@@ -1,21 +1,17 @@
 # Architectuur
 
-Versie 0.2. **Bevestigd**: React 19/TypeScript/Vite, centrale routing in src/App.tsx, Tailwind/shadcn. Lokale XLSX-inspectie toegevoegd; geen server, database of optimalisatie-engine.
+Versie0.3. React19/TypeScript/Vite, centrale routes in src/App.tsx. Packing-engine is puur TypeScript, UI onafhankelijk. Geen server/database.
 
-## Modulegrenzen
-- domain: toekomstige entiteiten/invarianten en resolutie, zonder React/IO; alleen README.
-- application: toekomstige use-cases; geen concrete service/repository.
-- infrastructure: inspect-workbook.ts leest lokale XLSX met dynamisch geladen ExcelJS 4.4.0. Retourneert broninspectie, geen domeinobjecten/masterdata. Opslag/CERM-adapters nog open.
-- visualization: toekomstige read-only renderer; alleen README.
-- components/app: AppShell, ContractPhaseOverview en interactieve ExcelInspector met SheetInspector; Index composeert. Inspectieresultaten/keuzes alleen in React-geheugen.
+Domain/packing bevat types, collision/support/bounds, ValidationJSON, exactfilter/ranking, extreme-point engine, custom-box en pallet. Alle output wordt uit concrete placements opgebouwd. Input en resultatensets worden niet in-place veranderd door viewer/filter/ranking. Shape/override/operationele owner niet geïmplementeerd.
 
-## Geïmplementeerde inspectiestroom
-Browserbestandskeuze → oorspronkelijke ArrayBuffer → ExcelJS read-only parsing + SHA-256 via Web Crypto indien beschikbaar → bronrapport → werkblad/celpreview. Optionele lokale JSON-download; geen netwerkverzending, backend of persistentie. Bronstatus in projectregister staat los van tijdelijke browsersessie. Bij delen van een rapport in de chat kan inhoudelijke beoordeling volgen, niet automatisch vanuit React-state.
+Application bevat workerberichtcontract en Web Worker; UI start/annuleert worker. Domain kan ook rechtstreeks vanuit Node-tests draaien. Geen Reactimport in engine. Verwerking blijft lokaal en beperkt.
 
-## Voorgestelde toekomstige stroom
-Bron → inspectie/preview/validatie → gecontroleerde masterdata. ProductNumber + PackagingMode → override/standard-resolutie → engine-invoer → immutable Solution/Placements → read-only renderer. Variantmaken en actiefkeuze gescheiden. Rendertransforms nooit terug naar placements.
+Infrastructure bevat read-only ExcelJS-parser en Zod-gevalideerde solution-snapshotadapter. Ingelezen scores/ValidationJSON niet vertrouwen: fysieke data opnieuw valideren. Geen localStorage/API/CERM. Download is bewust lokaal bestand, geen versiebeheerbare opslag.
 
-## Opslag en veiligheid — open
-GitHub is bron van waarheid voor code/contracten, niet automatisch operationele data. Owner/transacties/autorisatie en CERM-grens Q04/Q09. Geen XLSX-bestanden in public of versiebeheer zonder Q10; rapport bevat mogelijk gevoelige data. Inspecteur is bedoeld voor vertrouwde kleine bronnen, geen sandbox voor schadelijke ZIP-bestanden. Rij/cellimieten na parsing. Formules/links niet uitgevoerd; broncellen als React-tekst, geen HTML-injectie.
+UI: ProductInputs → invoersnapshot → worker → solutions → exactfilter/sortering → SolutionDetails. Viewer legt placements rechtstreeks in read-only SVG bovenaanzicht per laag. PalletPanel consumeert buitenmaten uit geselecteerde solution/gevalideerd snapshot/handmatige omdoos; database-recordadapter kan later aangesloten worden. Pallethoogte/overhang uit instellingen, geen productspeling opnieuw toepassen op buitenmaten.
 
-Nog niet beschikbaar: engine, productie-import, database, CERM, definitieve solutionbewerking, 3D en operationele exports. Routes/config ongewijzigd. Zie [infrastructure](../src/infrastructure/README.md), [import](IMPORT_EXPORT.md), [UI](UI_CONTRACT.md), [vragen](OPEN_QUESTIONS.md) en [index](README.md).
+Toekomst: gecontroleerde masterimport → override/standard-resolutie → aparte STOCK/PERSO contexten → historische variants/CurrentSolutionID. Eigen appdata-opslag en CERM-grens Q04/Q09. Geen enginekeuze uit fictieve Excelmappings.
+
+Veiligheid: lokale beperkte bestanden, schema/finite-number checks, geen formules of links uitvoeren, brontekst via React, geen HTMLinjectie. ExcelZIP-limitatie geldt na parsing en is geen malware-sandbox. Database/publicatie/privacybesluiten nog open.
+
+Zie [contract](ALGORITHM_CONTRACT.md), [import](IMPORT_EXPORT.md), [data](DATA_MODEL.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).

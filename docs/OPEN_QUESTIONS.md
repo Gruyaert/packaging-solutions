@@ -1,26 +1,22 @@
 # Open vragen
 
-Versie 0.1. Elke rij heeft status **open**. Geen ontbrekende regel wordt vervangen door een generieke aanname. B1 bevestigt vereisten; B2 bevestigt alleen ontvangen bronmetadata. Zie [bronregister](sources/README.md).
+Versie0.3. B4 bevestigt nu mm, X=L/Y=B/Z=H, halve horizontale speling, hoogtespeling bovenaan, zes selecteerbare rotaties, zoek-/sorteringsfeedback en palletoverhang. Oude engineblokkade opgeheven; resterende keuzes hieronder expliciet.
 
-| ID | Vraag | Impact | Noodzakelijke bron | Implementatieblokkade |
-|---|---|---|---|---|
-| Q01 | Werkbladen, headers, celtypen, verborgen tabs, formules/cache, lege rijen, dubbele/ontbrekende keys en eenheden? Exacte doosentiteit? | datamodel en mapping | beide werkbladextracten inclusief metadata of geschikt XLSX-inspectiemiddel | echte masterimport/schema |
-| Q02 | Hoe ziet Zite eruit; welke schermen, routes, tabellen en controles bestaan? | reconstructietrouw | screenshots en functionele voorbeelden | definitieve UI/renderer; niet voorlopig skelet |
-| Q03 | Is PackagingMode onderdeel override-uniciteit; hoe werken veldmerge, leeg/null/fallback en optionele shapereferenties? | deterministische resolutie | override/standard voorbeelden en besluit | resolutie-engine |
-| Q04 | Wie bezit context/CurrentSolutionID; solution-ID, variantrelatie, metadata, editbare velden, actieve historie? | versiebeheer en modusscheiding | echte solutionworkflow/export | solutionopslag en mutaties |
-| Q05 | Eenheden, interne/externe doosmaat, nominale maten, tolerantiegrenzen, horizontale verdeling en compressie-effect? | fysieke juistheid | brondefinities + meetvoorbeelden | dimensionele berekening |
-| Q06 | Assen/oorsprong, rotaties, patronen, botsing/precisie, supportcontact en laagcriteria? | geometrische juistheid | placementdata, enginebewijs en supportvoorbeelden | packing-engine en fysieke visualisatie |
-| Q07 | Zoekdekking, ranking, exactfiltersemantiek, limieten, annulering en gouden uitkomsten? | volledigheid/prestatie | Zite input/output + onderbouwde algoritmeregels | enginekeuze/implementatie/golden assertions |
-| Q08 | Importvervanging, deletionbeleid, revisies en exportformaten? | dataverlies en interoperabiliteit | expliciet import/exportbeleid en voorbeelden | productie-import/export |
-| Q09 | Waar staat eigen appdata; CERM-grens, autorisatie en bewaarbeleid? | architectuur/privacy | eigenaar- en infrastructuurbesluit | persistente appdata/CERM-koppeling |
-| Q10 | Mogen Excelbytes in Git; bevatten ze gevoelige of vertrouwelijke data? | publicatie/privacy | expliciete toestemming + inhoudscontrole | kopiëren naar docs/sources en publiceren van bronnen |
-| Q11 | Is GitHub-remote gekoppeld; welke rechten, doelbranch en PR-procedure? | publicatiebewijs | remoteconfig + toegangscontrole + branchbeleid | push/PR; lokale main is geen bewijs |
-| Q12 | Onafhankelijke SHA-256 en integriteitscontrole van bronnen? | herkomst/integriteit | checksumtool op oorspronkelijke bytes | verified hash/bytevergelijking; namen zijn geen bewijs |
-| Q13 | Mobiel/desktop/a11y en lint feitelijk uitgevoerd? | acceptatie skelet | browsercontrole en ESLint-run | volledige faseacceptatie; build/typecheck niet voldoende |
+| ID/status | Vraag | Impact/benodigde bron | Blokkade |
+|---|---|---|---|
+| Q01 open | Excelheaders/keys/types/hidden/formules/cache/eenheden en echte doosentiteit? | echte bronrapporten en goedgekeurde mapping | productie-masterimport, niet handmatige engine |
+| Q02 open | Zite-schermen/routes/bediening? | screenshots/operatorflows | reconstructietrouw, niet eigen werkbank |
+| Q03 open | Override-scope/PackagingMode/null/fallback? | product/standardvoorbeelden | masterresolutie |
+| Q04 open | Owner/CurrentSolutionID/variantmetadata? | opslag-/workflowbesluit | historische appopslag/editor |
+| Q05 deels bevestigd | mm, halve L/B/topH en interne versus externe adaptermaten bevestigd; mastereenheden/tolerantiegrenzen/compressie-effect nog open | B4 + masterdefinities | compressie/productieschema |
+| Q06 deels bevestigd | assen en zes rotaties bevestigd; volledige union-support, epsilon en maxima-definitie als algoritmevoorstel reviewen | operator/placementvoorbeelden | productievalidatie, niet implementatie |
+| Q07 deels bevestigd | exacte filterfeedback en60/40 bevestigd; heuristische zoekdekking/rankingrest/palletpatronen reviewen, echte Zite-golden voorbeelden ontbreken | productieinput/output en performancebudget | optimaliteitsclaim en productieacceptatie |
+| Q08 deels bevestigd | lokale0.3 snapshots geïmplementeerd; productie-import/delete/revision/exportformats open | beleid/examples | operationele import/export |
+| Q09 open | opslag/eigenaar/CERM/autorisatie/bewaarbeleid? | architectuurbesluit | database/CERM-koppeling |
+| Q10 open | mogen bronbytes/rapporten in Git, gevoeligheid? | expliciete toestemming en inhoudsreview | bronpublicatie |
+| Q11 open | remote/rechten/branch/PR? | geverifieerde Gitconfig/beleid | push/PR |
+| Q12 open voor projectbronnen | onafhankelijke bronchecksum/bytekopie? | echte lokale rapporten en vergelijking | integriteitsclaim |
+| Q13 open | tests/typecheck/build/lint/browser/a11y werkelijk uitgevoerd? | uitvoerlogs en browserreview | productieacceptatie |
 
-## Beschikbare voorziening en resterende blokkades (0.2)
-De parserblokkade is pragmatisch aangepakt: lokale browserinspectie via ExcelJS 4.4.0 en SHA-256 via Web Crypto indien beschikbaar. De originele XLSX-bestanden kunnen rechtstreeks worden geselecteerd; geen CSV-conversie vereist. Q01/Q12 blijven open voor de twee projectbronnen totdat echte resultaten/checksums worden gedeeld en beoordeeld; implementatie is geen bewijs van inhoudelijke controle.
-
-Deze chat heeft geen browserbesturing, command-uitvoering voor tests of Git remote/push-tools. De preview heeft geen directe toegang tot chatbijlagen. Download het lokale JSON-inspectierapport en deel het bewust voor inhoudelijke analyse, met aandacht voor vertrouwelijke gegevens. Bronnen blijven ongewijzigd op ontvangen locatie totdat Q10 is opgelost. Zie [inspectiecontract](IMPORT_EXPORT.md).
-
-Zie [algoritme](ALGORITHM_CONTRACT.md), [testplan](TEST_PLAN.md), [besluiten](DECISION_LOG.md) en [index](README.md).
+## Actuele beperkingen
+Pure engine en Vitest-tests zijn toegevoegd op basis van nieuwe expliciete regels. Geen uitvoer-/browsertool in deze turn; tests/build/typecheck/lint niet als geslaagd rapporteren. Preview kan geen chatbijlagen rechtstreeks lezen; lokale Excel/snapshot-selectie wel. Originele Excelbytes niet gepubliceerd of gewijzigd. Database-recordadapter is nog geen databasekoppeling. Zie [contract](ALGORITHM_CONTRACT.md), [tests](TEST_PLAN.md), [besluiten](DECISION_LOG.md) en [index](README.md).

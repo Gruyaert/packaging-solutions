@@ -1,25 +1,31 @@
 # Gebruikershandleiding
 
-Versie 0.2. **Bevestigd**: broninspectie is toegevoegd aan de startpagina. **Voorlopig voorstel**: stijl en koprijselectie. **Open**: domeinmapping en oorspronkelijke Zite-bediening.
+Versie0.3. Packing/maatwerk/palletisatie lokaal beschikbaar; zoekdekking heuristisch, geen productiecertificering of databasekoppeling.
 
-## Excelbestanden inspecteren
-1. Klik bovenaan op **Excelbestanden inspecteren**.
-2. Selecteer de originele Shapes.xlsx en Omdozen.xlsx op je computer, eventueel samen.
-3. Kies een bestand en open de werkbladen. Ook verborgen werkbladen worden opgenomen.
-4. Controleer de koprij: standaard wordt de eerste niet-lege rij voorgesteld, niet als bewezen header aangenomen.
-5. Selecteer expliciet sleutelkolommen om exacte duplicaten en ontbrekende/niet-toetsbare sleutels te bekijken. Formules in sleutelvelden worden niet automatisch als geldig beschouwd.
-6. Bekijk broncellen, celtypen, formules en opgeslagen cacheresultaten. De tabel toont 20 niet-lege datarijen per pagina.
-7. Gebruik **Inspectierapport downloaden** voor het volledige JSON-bronrapport. Je kunt dit rapport hier in de chat delen om de mapping te laten uitwerken; controleer eerst op vertrouwelijke gegevens.
+## Verpakking zoeken
+1. Vul product1 in: referentie, L/B/H in mm, aantal, gewicht g/kg (max3decimalen), rotaties en maxima. Voeg maximaal4 extra producten toe; verwijder ongebruikte extra producten.
+2. Geef praktische speling op. L/B is totale speling gelijk over beide zijden; hoogte volledig bovenaan. Producten beginnen op z=0.
+3. Vul één of meer echte kandidaatdozen in met interne maten en kartondikte.
+4. Kies Gewenste aantallen of Minimale lucht/maximaal vullen en zoek. Annuleren beëindigt de worker.
+5. Kies Maximale vulling of Praktisch/ecologisch. Exact gevraagd aantal is alleen een resultaatfilter; afwijkende oplossingen blijven behouden wanneer je dit uitschakelt.
 
-Geen CSV-conversie of andere ChatGPT-chat nodig. De bestandskeuze geeft de browser toestemming om lokaal te lezen; het is geen serverupload. Chatbijlagen zijn niet automatisch toegankelijk vanuit de preview. Het rapport bevat alle uitgelezen cellen, werkbladzichtbaarheid, lege rijen binnen het gebruikte bereik, samengevoegde bereiken en SHA-256 indien Web Crypto beschikbaar is. Interactieve koprij- en sleutelkeuzes worden niet in het rapport opgeslagen.
+De enginelimieten en waarschuwingen staan bij resultaten. Geen gevonden solution is geen bewijs van onmogelijkheid. Resultaten horen bij de laatste berekende invoer, niet bij latere wijzigingen. Herbereken na invoerwijzigingen.
 
-## Privacy en beperkingen
-Bestanden worden niet gewijzigd, naar een server gestuurd, in Git geplaatst of in browseropslag bewaard. Inspectie wissen of pagina herladen verwijdert de sessieresultaten; een gedownload rapport blijft op je computer staan. Een nieuwe selectie vervangt de vorige resultaten. Alleen vertrouwde .xlsx-bestanden gebruiken; maximaal 5 MB per bestand, 20.000 rijen/256 kolommen per blad, 200.000 gevulde cellen per bestand. Limieten voor rijen/cellen worden na parsing gecontroleerd; dit is geen sandbox voor schadelijke spreadsheets. Formules worden niet uitgevoerd en links niet geopend. Cachewaarden kunnen ontbreken of verouderd zijn. ExcelJS levert geïnterpreteerde celwaarden, niet de ruwe XML van alle Excel-eigenschappen.
+## Omdoos op maat
+Eén product: per rotatie N×1×1,1×N×1,1×1×N; eerst korte-asherhaling, geen ecologische/luchtsortering. Vanaf twee producten: echte packing met alle gevraagde aantallen; beide sorteringen beschikbaar. Stel karton, palletfootprint, overmaat en maxdoosdimensie in. Standaard1200×800,5%,2000mm. Buitenmaat=binnen+2karton; draaien op pallet toegestaan. Ongeldige lineaire opties staan onder Afgekeurde varianten.
 
-## Status begrijpen
-**Technisch geïnspecteerd — mapping nog open** betekent dat een bestand lokaal is uitgelezen, niet dat de betekenis of masterdata gevalideerd is. Het afzonderlijke bronregister blijft de vastgelegde projectstatus tonen totdat een inspectierapport is beoordeeld. Geen eenheden of doosentiteit worden verzonnen.
+## Solutiondetail
+Bekijk counts versus gevraagd, lucht/benutting/gewicht, binnen/buitenmaten, fysieke placementtabel, read-only bovenaanzicht per laag en ValidationJSON. X=lengte,Y=breedte,Z=hoogte. Rode rand markeert heuristisch gedetecteerde losse restproductplaatsing. Geen nominale maatwijziging. Laagkeuze verandert geen placementdata.
 
-## Nog niet beschikbaar
-Contractfase — optimalisatie nog niet beschikbaar. Geen packing-engine, productie-import, database, CERM, definitieve solutionbewerking, 3D of operationele exports. Alleen het inspectierapport kan worden gedownload. STOCK/PERSO en immutable solutions blijven contractvereisten, niet geïmplementeerde flows.
+Solution JSON downloaden bewaart een volledig lokaal v0.3 snapshot met products/spacing/placements/validation. Het bevat mogelijk vertrouwelijke gegevens. Dit is geen databaseopslag, variant-editor of CERM-export.
 
-Voor vervolg zijn het echte inspectierapport, screenshots/input-outputvoorbeelden en opname-/publicatiebeleid nodig. Zie [UI](UI_CONTRACT.md), [import/export](IMPORT_EXPORT.md), [vragen](OPEN_QUESTIONS.md) en [index](README.md).
+## Palletisatie
+Kies actieve packaging solution, lokaal opgeslagen solution-JSON of handmatige buitenmaten van een omdoos. De database is nog niet aangesloten. Snapshots worden bij inlezen schema- en fysiek gevalideerd.
+
+Stel palletL/B/H,maxTotaleHoogte en overhang per zijde in; effectieve maat=palletmaat+2overhang. Doosrotaties0/90, gemengde rasters en volledig ondersteunde alternerende lagen worden onderzocht. Bekijk dozen/laag,layers,totaal,hoogte,benutting,overhang en score. Het bovenaanzicht toont beste eerste laag; gestippeld is de palletgrens. Geen certificaat voor draagkracht, gewicht, wrijving of transportstabiliteit.
+
+## Bestaande Excelinspectie
+Selecteer oorspronkelijke XLSX in Excelbestanden inspecteren: alle werkbladen/hiddenstate, celtypen, formules/cache, lege rijen, koprij- en sleutelkeuze. Download volledig JSON-bronrapport om bewust te delen voor mappinganalyse. Geen CSV/andere chat verplicht. Chatbijlagen niet automatisch toegankelijk in preview. Max5MB per bestand;20.000rijen/256kolommen per blad en200.000cellen; alleen vertrouwde bestanden, geen formuleuitvoering. Technisch uitlezen is geen goedgekeurde mastermapping.
+
+## Privacy en grenzen
+Alles lokaal; geen serverupload/localStorage/database/CERM-write. Herladen wist sessie; gedownloade bestanden blijven op je computer. Later: gecontroleerde masterimport, eigenaar/CurrentSolutionID/versionering, Editor, compressie,3D en productieformaten. Zie [contract](ALGORITHM_CONTRACT.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md), [import](IMPORT_EXPORT.md) en [index](README.md).

@@ -1,7 +1,7 @@
 # infrastructure
 
-**Bevestigd**: inspect-workbook.ts is de lokale read-only XLSX-adapter (ExcelJS 4.4.0). Leest browser-File naar een versie 0.2 bronrapport met celwaarden, formules, werkbladmetadata en optionele SHA-256. checkKeys voert uitsluitend expliciet geselecteerde bronkeycontroles uit; geen domeinmapping.
+inspect-workbook.ts: lokale read-only ExcelJS-adapter, JSON-bronrapport0.2 met cellen/formules/metadata/SHA-256. Geen mastermapping.
 
-Geen bestandswijziging, netwerkverzending of persistentie. De originele bijlagen zijn niet in een publieke bundel opgenomen. Bronrapporten zijn geen gevalideerde masterdata. Toekomstige appopslag/CERM-adapters **open**; geen kunstmatige repositorylaag.
+solution-snapshot.ts: lokaal v0.3 JSON downloaden/lezen; Zod controleert vorm/finite numbers, domain valideert placements opnieuw. Niet vertrouwen op meegeleverde scores/ValidationJSON; geen verborgen fysieke mutaties. Geen serverupload, localStorage, database of CERM-write. Originele Excelbytes niet publiek gebundeld.
 
 Zie [architectuur](../../docs/ARCHITECTURE.md), [import](../../docs/IMPORT_EXPORT.md), [data](../../docs/DATA_MODEL.md), [vragen](../../docs/OPEN_QUESTIONS.md) en [index](../../docs/README.md).
