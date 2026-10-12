@@ -4,4 +4,4 @@ export interface PackingRequest {
   mode: "search" | "custom"; products: Product[]; boxes: Box[]; spacing: Spacing;
   strategy: Strategy; custom: CustomSettings; maxWeightKg?: number; maxTotalLayers?: number;
 }
-export type PackingResponse = { result: SearchResult & { rejected?: { pattern: string; errors: string[] }[] } } | { error: string };
+export type PackingResponse = { result: SearchResult & { rejected?: { pattern: string; errors: string[] }[] }; elapsed?: number } | { error: string };

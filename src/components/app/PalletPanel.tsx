@@ -1,22 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DEFAULT_PALLET, effectivePallet, palletize, type PalletResult, type PalletSettings, type PalletSource } from "@/domain/packing/pallet";
-import type { Solution, Sorting } from "@/domain/packing/types";
+import { DEFAULT_PALLET, effectivePallet, type PalletResult, type PalletSettings, type PalletSource } from "@/domain/packing/pallet";
+import { createResultCache } from '@/application/result-cache';
+import { recordMetric } from '@/application/performance';
+import type { PalletResponse } from '@/application/pallet.worker';
+import type { Product, Solution, Sorting } from "@/domain/packing/types";
 import { toBox } from "@/infrastructure/packaging-records";
 import { parseSolutionSnapshot } from "@/infrastructure/solution-snapshot";
 import { downloadFile } from "@/infrastructure/report-export";
 import { usePackagingData } from "./PackagingDataProvider";
 import { RecordTable } from "./RecordTable";
 import { NumberField } from "./ProductInputs";
-export function PalletPanel({ solution }: { solution?: Solution }) {
+import { PalletViewer } from "./PalletViewer";
+export function PalletPanel({ solution, products = [], context }: { solution?: Solution; products?: Product[]; context?: { definitionId?: string; mode?: "STOCK" | "PERSO" } }) {
   const { records, write, busy, storage } = usePackagingData();
+  const [openedPallet, setOpenedPallet] = useState<string>('');
   const [source, setSource] = useState(solution ? "packaging" : "database"), [saved, setSaved] = useState<Solution>(), [cartonId, setCartonId] = useState(""), [savedRecordId, setSavedRecordId] = useState("");
+  const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const [dims, setDims] = useState({ length: 0, width: 0, height: 0 });
   const [settings, setSettings] = useState<PalletSettings>({ ...DEFAULT_PALLET });
   const [sorting, setSorting] = useState<Sorting>("fill"), [results, setResults] = useState<PalletResult[]>([]), [selectedPattern, setSelectedPattern] = useState(""), [error, setError] = useState("");
   const [calculatedSource, setCalculatedSource] = useState<PalletSource>(), [name, setName] = useState("");
-  useEffect(() => { if (solution) { setSource("packaging"); setResults([]); } }, [solution]);
+  const [calculating, setCalculating] = useState(false);
+  const workerRef = useRef<Worker | undefined>(undefined);
+  const cache = useRef(createResultCache<PalletResult[]>());
+  const cancel = () => { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); };
+  useEffect(() => () => { workerRef.current?.terminate(); cache.current.clear(); }, []);
+  useEffect(() => { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); if (solution) { setSource("packaging"); setResults([]); } }, [solution]);
   const effective = effectivePallet(settings);
   const update = (patch: Partial<PalletSettings>) => { setSettings({ ...settings, ...patch }); setResults([]); };
   const run = () => {
@@ -25,29 +36,48 @@ export function PalletPanel({ solution }: { solution?: Solution }) {
       if ((source === "saved" || source === "json") && !saved) throw new Error("Kies eerst een gevalideerde opgeslagen solution.");
       const carton = records.cartons.find(c => c.id === cartonId && c.active);
       if (source === "database" && !carton) throw new Error("Kies een actieve omdoos uit de filterbare lijst.");
-      const input: PalletSource = source === "database" ? { kind: "database", box: toBox(carton!) } : source === "manual" ? { kind: "database", box: { ...dims, boxId: "manual-carton", reference: "Handmatige buitenmaat", cardboard: 0 } } : { kind: source === "packaging" ? "packaging" : "saved", solution: (source === "packaging" ? solution : saved)! };
-      const calculated = palletize(input, settings, sorting);
-      setResults(calculated); setCalculatedSource(input); setSelectedPattern(calculated[0]?.pattern ?? ""); setError("");
-      if (!calculated.length) setError("Geen patroon past binnen deze footprint en hoogte.");
-    } catch (failure) { setResults([]); setError(failure instanceof Error ? failure.message : "Palletisatie mislukt."); }
+      const record = source === "saved" ? records.solutions.find(r => r.id === savedRecordId) : undefined;
+      const input: PalletSource = source === "database" ? { kind: "database", box: toBox(carton!) } : source === "manual" ? { kind: "database", box: { ...dims, boxId: "manual-carton", reference: "Handmatige buitenmaat", cardboard: 0 } } : { kind: source === "packaging" ? "packaging" : "saved", solution: (source === "packaging" ? solution : saved)!, products: source === "packaging" ? products : savedProducts, context: source === "packaging" ? context : record ? { definitionId: record.definition_id ?? undefined, mode: record.packaging_mode } : undefined };
+      const job = { source: input, settings, sorting }, key = JSON.stringify(job);
+      const accept = (calculated: PalletResult[]) => { setResults(calculated); setCalculatedSource(input); setSelectedPattern(calculated[0]?.pattern ?? ""); setError(calculated.length ? "" : "Geen patroon past binnen deze footprint en hoogte."); };
+      const cached = cache.current.get(key);
+      if (cached) { accept(cached); return; }
+      workerRef.current?.terminate();
+      const worker = new Worker(new URL('../../application/pallet.worker.ts', import.meta.url), { type: 'module' }), start = performance.now();
+      workerRef.current = worker; setCalculating(true); setResults([]); setError('');
+      worker.onmessage = ({ data }: MessageEvent<PalletResponse>) => {
+        if (workerRef.current !== worker) return;
+        worker.terminate(); workerRef.current = undefined; setCalculating(false);
+        recordMetric('totaal', performance.now() - start);
+        if ('error' in data) setError(data.error);
+        else { recordMetric('palletisatie', data.elapsed); cache.current.set(key, data.results); accept(data.results); }
+      };
+      worker.onerror = () => { if (workerRef.current !== worker) return; worker.terminate(); workerRef.current = undefined; setCalculating(false); setError('Palletworker kon niet worden uitgevoerd.'); };
+      worker.postMessage(job);
+    } catch (failure) { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); setResults([]); setError(failure instanceof Error ? failure.message : "Palletisatie mislukt."); }
   };
   const best = results.find(r => r.pattern === selectedPattern) ?? results[0];
   return <section className="min-w-0 space-y-5" aria-label="Palletisatie"><div><h1 className="text-2xl font-semibold">Palletisatie</h1><p className="mt-1 text-xs text-muted-foreground">Kies een doos of solution, bereken patronen en bewaar het gekozen resultaat met bron en instellingen.</p></div>
+    {calculating && <Button variant="outline" className="rounded-xl" onClick={() => { cancel(); setError('Palletberekening geannuleerd.'); }}>Annuleren</Button>}
+    <fieldset disabled={calculating} className="min-w-0 space-y-5">
     <label className="block space-y-1 text-xs">Bron<select className="h-10 w-full rounded-xl border bg-card px-3" value={source} onChange={e => { setSource(e.target.value); setResults([]); setSaved(undefined); setError(""); }}><option value="database">{storage === "local" ? "Omdoos uit lokale testwerkruimte · filterbare lijst" : "Omdoos uit Supabase · filterbare lijst"}</option><option value="packaging">Gekozen packaging solution</option><option value="saved">{storage === "local" ? "Opgeslagen solution uit lokale testwerkruimte" : "Opgeslagen solution uit Supabase"}</option><option value="manual">Handmatige buitenmaten</option><option value="json">Lokale solution-JSON</option></select></label>
     {source === "database" && <><p className="text-xs text-muted-foreground">Interne maten + 2×kartondikte worden precies eenmaal naar buitenmaten omgezet.</p><RecordTable label="Palletdoos" rows={records.cartons.filter(c => c.active)} selectedId={cartonId} columns={[{ label: "Referentie", value: c => c.reference }, { label: "Beschrijving", value: c => c.description }, { label: "Binnen-L", value: c => c.length }, { label: "Binnen-B", value: c => c.width }, { label: "Binnen-H", value: c => c.height }, { label: "Karton", value: c => c.cardboard }]} actions={c => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => { setCartonId(c.id); setResults([]); }}>Kiezen</Button>} /></>}
-    {source === "saved" && <><RecordTable label="Palletsolution" rows={records.solutions.filter(s => s.status !== "archived")} selectedId={savedRecordId} columns={[{ label: "Naam", value: r => r.name }, { label: "Status", value: r => r.status }, { label: "Definitie", value: r => records.definitions.find(d => d.id === r.definition_id)?.name ?? "los" }]} actions={r => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => { try { const parsed = parseSolutionSnapshot(JSON.stringify(r.snapshot)); setSaved(parsed.solution); setSavedRecordId(r.id); setResults([]); setError(""); } catch (failure) { setSaved(undefined); setResults([]); setError(failure instanceof Error ? failure.message : "Ongeldige snapshot."); } }}>Kiezen</Button>} />{saved && <p className="text-xs text-primary">Gevalideerde solution: {saved.box.reference} · {saved.solutionId}</p>}</>}
+    {source === "saved" && <><RecordTable label="Palletsolution" rows={records.solutions.filter(s => s.status !== "archived")} selectedId={savedRecordId} columns={[{ label: "Naam", value: r => r.name }, { label: "Status", value: r => r.status }, { label: "Definitie", value: r => records.definitions.find(d => d.id === r.definition_id)?.name ?? "los" }]} actions={r => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => { try { const parsed = parseSolutionSnapshot(JSON.stringify(r.snapshot)); setSaved(parsed.solution); setSavedProducts(parsed.products); setSavedRecordId(r.id); setResults([]); setError(""); } catch (failure) { setSaved(undefined); setResults([]); setError(failure instanceof Error ? failure.message : "Ongeldige snapshot."); } }}>Kiezen</Button>} />{saved && <p className="text-xs text-primary">Gevalideerde solution: {saved.box.reference} · {saved.solutionId}</p>}</>}
     {source === "manual" && <div className="grid gap-3 sm:grid-cols-3">{(["length", "width", "height"] as const).map((axis, i) => <NumberField key={axis} label={["Buiten-L (mm)", "Buiten-B (mm)", "Buiten-H (mm)"][i]} value={dims[axis]} min={0.001} onChange={v => { setDims({ ...dims, [axis]: v }); setResults([]); }} />)}</div>}
-    {source === "json" && <label className="block space-y-2 text-xs">Solutionbestand<Input type="file" accept=".json" className="rounded-xl bg-card" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ""; if (!file) return; setResults([]); try { if (file.size > 5 * 1024 * 1024) throw new Error("Snapshot maximaal 5 MB."); const parsed = parseSolutionSnapshot(await file.text()); setSaved(parsed.solution); setError(""); } catch (failure) { setSaved(undefined); setError(failure instanceof Error ? failure.message : "Ongeldig snapshot."); } }} />{saved && <span className="text-primary">Gevalideerd: {saved.solutionId}</span>}</label>}
+    {source === "json" && <label className="block space-y-2 text-xs">Solutionbestand<Input type="file" accept=".json" className="rounded-xl bg-card" onChange={async e => { const file = e.target.files?.[0]; e.target.value = ""; if (!file) return; setResults([]); try { if (file.size > 5 * 1024 * 1024) throw new Error("Snapshot maximaal 5 MB."); const parsed = parseSolutionSnapshot(await file.text()); setSaved(parsed.solution); setSavedProducts(parsed.products); setError(""); } catch (failure) { setSaved(undefined); setError(failure instanceof Error ? failure.message : "Ongeldig snapshot."); } }} />{saved && <span className="text-primary">Gevalideerd: {saved.solutionId}</span>}</label>}
     {source === "packaging" && <p className="text-xs text-muted-foreground">{solution ? `${solution.box.reference} · ${solution.solutionId}; buitenmaat inclusief karton` : "Kies Palletiseren bij een zoekresultaat of opgeslagen solution."}</p>}
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{(["palletLength", "palletWidth", "palletHeight", "maxTotalHeight"] as const).map((key, index) => <NumberField key={key} label={["Pallet-L (mm)", "Pallet-B (mm)", "Pallethoogte (mm)", "Max. totale hoogte (mm)"][index]} value={settings[key]} onChange={n => update({ [key]: n })} />)}</div>
     <details className="rounded-xl border bg-card p-3"><summary className="cursor-pointer text-xs font-semibold">Geavanceerd · overhang per zijde</summary><div className="mt-3 grid gap-3 sm:grid-cols-2"><NumberField label="Overhang L per zijde (mm)" value={settings.overhangLengthPerSide} onChange={n => update({ overhangLengthPerSide: n })} /><NumberField label="Overhang B per zijde (mm)" value={settings.overhangWidthPerSide} onChange={n => update({ overhangWidthPerSide: n })} /></div></details>
     <p className="text-xs text-muted-foreground">Effectief footprint: {effective.length} × {effective.width} mm. Overhang 5 mm per zijde voegt 10 mm toe.</p>
-    <div className="flex flex-wrap items-center gap-3"><label className="text-xs">Sortering<select className="ml-2 rounded-xl border bg-card p-2" value={sorting} onChange={e => { setSorting(e.target.value as Sorting); setResults([]); }}><option value="fill">Maximale palletvulling</option><option value="practical">Praktisch/ecologisch</option></select></label><Button className="rounded-xl" onClick={run}>Palletpatronen berekenen</Button></div>
+    <div className="flex flex-wrap items-center gap-3"><label className="text-xs">Sortering<select className="ml-2 rounded-xl border bg-card p-2" value={sorting} onChange={e => { setSorting(e.target.value as Sorting); setResults([]); }}><option value="fill">Maximale palletvulling</option><option value="practical">Praktisch/ecologisch</option></select></label><Button className="rounded-xl" onClick={run}>{calculating ? 'Palletpatronen berekenen…' : 'Palletpatronen berekenen'}</Button></div>
+    </fieldset>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {best && <><RecordTable label="Palletpatronen" rows={results.map((r, i) => ({ ...r, id: String(i) }))} columns={[{ label: "Patroon", value: r => r.pattern }, { label: "Per laag", value: r => r.boxesPerLayer }, { label: "Lagen", value: r => r.layers }, { label: "Totaal", value: r => r.totalBoxes }, { label: "Hoogte mm", value: r => r.height.toFixed(2) }, { label: "Oppervlak %", value: r => (r.surfaceUtilization * 100).toFixed(1) }, { label: "Volume %", value: r => (r.volumeEfficiency * 100).toFixed(1) }, { label: "Score", value: r => r.score.toFixed(1) }]} actions={r => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setSelectedPattern(r.pattern)}>Bekijken</Button>} />
       <h2 className="text-sm font-semibold">Gekozen patroon: {best.pattern}</h2><svg role="img" aria-label="Gekozen palletpatroon, eerste laag" viewBox={`${-settings.overhangLengthPerSide} ${-settings.overhangWidthPerSide} ${effective.length} ${effective.width}`} className="max-h-72 w-full rounded-xl border bg-card">{best.placements.filter(p => p.layerIndex === 0).map(p => <rect key={p.placementId} x={p.x} y={p.y} width={p.length} height={p.width} fill="hsl(var(--primary))" fillOpacity={p.orientation === "L-B-H" ? 0.3 : 0.6} stroke="hsl(var(--primary))" vectorEffect="non-scaling-stroke"><title>{p.placementId} · {p.orientation}</title></rect>)}<rect x={0} y={0} width={settings.palletLength} height={settings.palletWidth} fill="none" stroke="hsl(var(--foreground))" strokeDasharray="6 4" vectorEffect="non-scaling-stroke" /></svg><p className="text-xs text-muted-foreground">{best.warnings.join(" ")} Gestippeld = fysieke palletgrens.</p>
       <div className="flex flex-wrap items-end gap-3"><label className="min-w-0 flex-1 space-y-1 text-xs">Resultaatnaam<Input className="rounded-xl bg-card" value={name} onChange={e => setName(e.target.value)} placeholder="Naam voor opgeslagen palletisatie" /></label><Button className="rounded-xl" disabled={busy || !name.trim()} onClick={() => write("pallets", { name: name.trim(), source: calculatedSource, settings, result: best })}>Gekozen resultaat opslaan</Button><Button variant="outline" className="rounded-xl" onClick={() => downloadFile("pallet-result.json", JSON.stringify({ contractVersion: "0.3", source: calculatedSource, settings, result: best }, null, 2), "application/json")}>Pallet-JSON</Button></div>
     </>}
-    <h2 className="text-sm font-semibold">Opgeslagen palletresultaten</h2><RecordTable label="Opgeslagen palletresultaten" rows={records.pallets} columns={[{ label: "Naam", value: r => r.name }, { label: "Datum", value: r => r.created_on }, { label: "Patroon", value: r => r.result.pattern }, { label: "Dozen", value: r => r.result.totalBoxes }]} actions={r => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => downloadFile("saved-pallet-result.json", JSON.stringify(r, null, 2), "application/json")}>JSON-export</Button>} />
+    {best && <PalletViewer result={best} settings={settings} source={calculatedSource} title={name || best.pattern} />}
+    <h2 className="text-sm font-semibold">Opgeslagen palletresultaten</h2><RecordTable label="Opgeslagen palletresultaten" rows={records.pallets} columns={[{ label: "Naam", value: r => r.name }, { label: "Datum", value: r => r.created_on }, { label: "Patroon", value: r => r.result.pattern }, { label: "Dozen", value: r => r.result.totalBoxes }]} actions={r => <><Button size="sm" variant="outline" className="rounded-lg" onClick={() => setOpenedPallet(r.id)}>Viewer / HTML</Button><Button size="sm" variant="outline" className="rounded-lg" onClick={() => downloadFile("saved-pallet-result.json", JSON.stringify(r, null, 2), "application/json")}>JSON-export</Button></>} />
+    {records.pallets.filter(r => r.id === openedPallet).map(r => <PalletViewer key={r.id} result={r.result} settings={r.settings} source={r.source as PalletSource} title={r.name} />)}
   </section>;
 }

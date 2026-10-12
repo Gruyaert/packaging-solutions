@@ -131,6 +131,9 @@ importers:
       next-themes:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      plotly.js-gl3d-dist-min:
+        specifier: ^4.1.2
+        version: 4.1.2
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -2738,6 +2741,9 @@ packages:
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
+
+  plotly.js-gl3d-dist-min@4.1.2:
+    resolution: {integrity: sha512-tjdg9RSBvaXtzdAKcCdExTbPWuzx/I9jBkBphblL5CpxWLKwSPEgQIcrlKkA3jAaQIACHjorVwA0DxUFlpDI+Q==}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -5930,6 +5936,8 @@ snapshots:
   pify@2.3.0: {}
 
   pirates@4.0.7: {}
+
+  plotly.js-gl3d-dist-min@4.1.2: {}
 
   possible-typed-array-names@1.1.0: {}
 

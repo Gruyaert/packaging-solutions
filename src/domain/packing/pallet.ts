@@ -1,8 +1,8 @@
-import { EPS, outside, volume, type Box, type Placement, type Solution, type Sorting } from "./types";
+import { EPS, outside, volume, type Box, type Placement, type Product, type Solution, type Sorting } from "./types";
 import { supported } from "./geometry";
 export interface PalletSettings { palletLength: number; palletWidth: number; palletHeight: number; maxTotalHeight: number; overhangLengthPerSide: number; overhangWidthPerSide: number }
 export const DEFAULT_PALLET: PalletSettings = { palletLength: 1200, palletWidth: 800, palletHeight: 144, maxTotalHeight: 1800, overhangLengthPerSide: 0, overhangWidthPerSide: 0 };
-export type PalletSource = { kind: "packaging" | "saved"; solution: Solution } | { kind: "database"; box: Box };
+export type PalletSource = { kind: "packaging" | "saved"; solution: Solution; products?: Product[]; context?: { definitionId?: string; mode?: "STOCK" | "PERSO" } } | { kind: "database"; box: Box };
 export interface PalletResult {
   pattern: string; boxesPerLayer: number; layers: number; totalBoxes: number; height: number;
   surfaceUtilization: number; volumeEfficiency: number; overhang: { lengthPerSide: number; widthPerSide: number };

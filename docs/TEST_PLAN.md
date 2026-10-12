@@ -1,6 +1,28 @@
 # Testplan
 
-Versie 0.6. B4-packingfeedback is bron van de golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases, lokale testmodus en eerste editorflow. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.7. B4-packingfeedback is bron van golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: feedbackcases, lokale testmodus, editor en interactive viewer/offline-exportverzoek. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+
+## Viewer / offline / performance 0.7
+[viewer-report.test.ts](../src/application/viewer-report.test.ts) bevat elf geschreven regressies: originele data behouden bij animatiesortering/exploded; laag/stapfilters; top/front/side-projecties en instellingnormalisatie; 10.000-item bron met maximaal 600 renderitems; script-breakout escaping/JSON roundtrip; embedded runtime/JSON/rapportsecties/geen externe scripts en script-syntaxis; shape/product/free bestandsnamen; packaging/pallet-adapters en unsaved product-/compressibilitybehoud; zelfstandig geserialiseerd model; clone/LRU/clear-cache; oversize/bytebudget. **Niet uitgevoerd.** De reporttest gebruikt een kleine Plotly-stub voor structuur/syntaxis, geen bewijs dat echte Plotly offline werkt. Tests vallen onder bestaande application Vitest-config.
+
+Handmatige bronreview uitgevoerd: viewer-adapters en resultaat/pallet/saved/edited/export-ingangen, lokale raw Plotly-lader, React vs imperative DOM-eigenaarschap, timer/observer/worker cleanup, begrensde geometrie/tabellen, memocache en timings. Geen shell/browseruitvoering beschikbaar: typecheck/build/Vitest/lint, WebGL/camera/offline/file:// en freeze/responsiviteit **niet uitgevoerd**. Geen historische groene checks als bewijs voor deze ronde. Geen productiegegevens/fixtures gewijzigd.
+
+| ID | Vereiste interactieve acceptatie | Status |
+|---|---|---|
+| V01 | Viewer bij verpakking zoeken, custom carton, palletisatie, saved en edited solution; identieke fysieke placements/JSON | bron gekoppeld, browser open |
+| V02 | 3D roteren/zoomen/pannen/hover/reset; gevuld/wire/beide, dekking/productkleuren/assen/grid/labels | implementatie aanwezig, WebGL/browser open |
+| V03 | Exploded 0/50/100 mm op beide sliders; bron/coördinaten/nominale maten/counts/validatie bytegelijk | pure test geschreven, uitvoering/browser open |
+| V04 | Alle lagen en elk laagnummer op doos/pallet; boven/front/side-projecties dezelfde bron | pure tests geschreven, browser open |
+| V05 | Begin/vorige/play/pause/volgende/einde; elke snelheid; één product/doos per stap, counters/layer correct; geen timer na unmount | code gereviewd, browser open |
+| V06 | Viewer zichtbaar→verborgen→zichtbaar, tabwissel/unmount/StrictMode tijdens async load/render; geen removeChild, dubbele observer of stale render | DOM-boundary gefixt, browserregressie open |
+| V07 | Export van elke ingang; tien secties, shape/definition/mode/productNumber/box/productdata/placements/validation/compressibility/pallet/settings/full JSON | structuurtests geschreven, downloadbrowser open |
+| V08 | Gedownload HTML via file:// met netwerk uit; geen CDN/server/Dyad; echte Plotly bedienen; JSON parsebaar; productie-minified export runtime zelfstandig | nog niet uitgevoerd |
+| V09 | Kwaadaardige referentie zoals sluit-script-tag blijft inert; volledige JSON herstelt inhoud; export geen andere eigenaar/sessiontokens | escapingtest geschreven, security/browser open |
+| V10 | 320/768/1280/1920 px: geen page-scroll horizontaal, controls wrap, tabellen intern scrollen, keyboard/focus/labels | browser/a11y open |
+| V11 | 300 packaging / 3000 pallet / 10.000 viewer-fixture: rendercap gemeld; lagen/eerdere stappen bereikbaar; volledige JSON; main thread reageren | captest geschreven, freeze/heap/frameprofiel open |
+| V12 | Worker annuleren/stale reacties negeren/unmount; identieke cachehit zonder nieuwe enginemeting; eviction/bytes/isolatie; dashboard zeven fasen met echte ms | bronreview/cachetests, uitvoering/browser open |
+
+Bounded geometrie en worker zijn risicobeperking, geen bewezen freeze-vrijgarantie voor elk apparaat/bestand. Tables in HTML tonen hoogstens 600 rijen met melding, volledige bron blijft ingebed. Compressionwarnings zijn diagnostiek, geen nieuwe overlapacceptatie. Free/databasebronnen mogen ontbrekende shape/productgegevens tonen zonder ze te verzinnen.
 
 ## Editor 0.6 — geschreven tests en open acceptatie
 [editor.test.ts](../src/domain/packing/editor.test.ts) bevat tien regressies: immutable duplicatie/move, nominale toegestane rotation/forbidden-input, join-to-row preview zonder mutation, column snap/overlap, undo/redo-log en nieuwe branch, remapping van compressie-assen met blijvend rood, counts/gravity/bounds/top/kaarton-footprint, forged-green rejection, save-new/lineage/origineelbehoud/current-pointer/metadata logging en atomic invalid-save/operationlimiet. Tests geschreven, **niet uitgevoerd**.

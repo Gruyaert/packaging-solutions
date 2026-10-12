@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createResultCache } from '@/application/result-cache';
+import { recordMetric } from '@/application/performance';
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_CUSTOM, type CustomSettings } from "@/domain/packing/custom-box";
@@ -13,7 +15,7 @@ import { usePackagingData } from "./PackagingDataProvider";
 import { RecordTable } from "./RecordTable";
 import { SaveSolution } from "./SaveSolution";
 
-export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution): void }) {
+export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }): void }) {
   const { records, storage } = usePackagingData();
   const [products, setProducts] = useState([newProduct(1)]), [source, setSource] = useState("database");
   const [strategy, setStrategy] = useState<Strategy>("desired"), [sorting, setSorting] = useState<Sorting>("fill"), [exact, setExact] = useState(false);
@@ -25,9 +27,10 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
   const [resultProducts, setResultProducts] = useState<Product[]>([]), [resultMode, setResultMode] = useState<"search" | "custom">("search");
   const [selectedId, setSelectedId] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const workerRef = useRef<Worker | undefined>(undefined);
-  useEffect(() => () => workerRef.current?.terminate(), []);
+  const cache = useRef(createResultCache<Extract<PackingResponse, { result: unknown }>>());
+  useEffect(() => () => { workerRef.current?.terminate(); cache.current.clear(); }, []);
   useEffect(() => {
-    workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setResponse(undefined); setError("");
+    workerRef.current?.terminate(); workerRef.current = undefined; cache.current.clear(); setBusy(false); setResponse(undefined); setError("");
     if (!initial) { setProducts([newProduct(1)]); setSpacing({ length: 0, width: 0, height: 0 }); setBoxes([]); setSource("database"); setMaxWeight(0); setMaxLayers(0); return; }
     const snapshot = initial.snapshot;
     setProducts(snapshot.products.map(p => { const inKg = Math.abs(p.weightKg * 1000 - Math.round(p.weightKg * 1000)) < 1e-6; return { ...p, inputWeight: inKg ? p.weightKg : Number((p.weightKg * 1000).toFixed(3)), weightUnit: inKg ? "kg" as const : "g" as const }; }));
@@ -43,22 +46,31 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
       if (mode === "search" && !candidates.length) throw new Error("Selecteer minstens één actieve omdoos uit de lijst of voer handmatige interne maten in.");
       if (!Number.isFinite(maxWeight) || maxWeight < 0 || !Number.isSafeInteger(maxLayers) || maxLayers < 0) throw new Error("Maximumgewicht moet niet-negatief zijn; totaal aantal lagen moet niet-negatief en geheel zijn.");
       const job: PackingRequest = { products: normalized, mode, boxes: candidates, spacing, strategy, custom, maxWeightKg: maxWeight || undefined, maxTotalLayers: maxLayers || undefined };
+      const key = JSON.stringify(job), cached = cache.current.get(key);
+      if (cached) { setResponse(cached); setResultProducts(normalized); setResultMode(mode); setSelectedId(cached.result.solutions[0]?.solutionId ?? ''); return; }
       workerRef.current?.terminate();
+      const start = performance.now();
       const worker = new Worker(new URL("../../application/packing.worker.ts", import.meta.url), { type: "module" });
       workerRef.current = worker; setBusy(true); setResponse(undefined);
       worker.onmessage = ({ data }: MessageEvent<PackingResponse>) => {
         if (workerRef.current !== worker) return;
         setBusy(false); worker.terminate(); workerRef.current = undefined;
+        recordMetric('totaal', performance.now() - start);
         if ("error" in data) setError(data.error);
-        else { setResponse(data); setResultProducts(normalized); setResultMode(mode); setSelectedId(data.result.solutions[0]?.solutionId ?? ""); }
+        else { if (data.elapsed !== undefined) recordMetric(mode === 'custom' ? 'custom carton' : 'packing', data.elapsed); cache.current.set(key, data); setResponse(data); setResultProducts(normalized); setResultMode(mode); setSelectedId(data.result.solutions[0]?.solutionId ?? ""); }
       };
       worker.onerror = () => { if (workerRef.current !== worker) return; setBusy(false); worker.terminate(); workerRef.current = undefined; setError("De rekenworker kon niet worden uitgevoerd."); };
       worker.postMessage(job);
     } catch (failure) { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError(failure instanceof Error ? failure.message : "Ongeldige invoer."); }
   }
   const linear = resultMode === "custom" && resultProducts.length === 1;
-  const filtered = response ? (exact ? exactFilter(response.result.solutions, resultProducts) : response.result.solutions) : [];
-  const ranked = linear ? filtered : sortSolutions(filtered, sorting);
+  const ranked = useMemo(() => {
+    const start = performance.now();
+    const filtered = response ? (exact ? exactFilter(response.result.solutions, resultProducts) : response.result.solutions) : [];
+    const result = linear ? filtered : sortSolutions(filtered, sorting);
+    if (response) recordMetric('scoring', performance.now() - start);
+    return result;
+  }, [response, exact, resultProducts, linear, sorting]);
   const selected = ranked.find(s => s.solutionId === selectedId) ?? ranked[0];
   const context = records.definitions.find(d => d.id === (initial?.definition_id ?? definitionId));
   return <section className="min-w-0 space-y-5"><div><h1 className="text-2xl font-semibold tracking-tight">{mode === "search" ? "Verpakking zoeken" : "Omdoos op maat"}</h1><p className="mt-1 text-xs text-muted-foreground">{context ? `Context: ${context.name} · ${context.scope} · ${context.packaging_mode}. ` : ""}{initial && "Bewerken maakt een nieuwe variant; het origineel blijft ongewijzigd. "}Alle resultaten komen uit geometrisch gecontroleerde placements.</p></div>
@@ -75,7 +87,7 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
       {!linear && <div className="flex flex-wrap items-center gap-3"><label className="text-xs">Sortering<select className="ml-2 rounded-xl border bg-card p-2" value={sorting} onChange={e => setSorting(e.target.value as Sorting)}><option value="fill">Maximale vulling / minimale lucht</option><option value="practical">Praktisch/ecologisch</option></select></label><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={exact} onChange={e => setExact(e.target.checked)} />Exact gevraagd aantal · resultaatfilter</label></div>}
       <RecordTable label="Packingresultaten" selectedId={selected?.solutionId} rows={ranked.map(s => ({ ...s, id: s.solutionId }))} columns={[{ label: "Doos", value: s => s.box.reference }, { label: "Binnenmaat", value: s => `${s.box.length} × ${s.box.width} × ${s.box.height}` }, { label: "Aantallen", value: s => Object.values(s.counts).join(" / ") }, { label: "Benutting %", value: s => (s.utilization * 100).toFixed(1) }, { label: "Gewicht kg", value: s => s.weightKg.toFixed(3) }, { label: "Patroon", value: s => s.metadata.pattern }]} actions={s => <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setSelectedId(s.solutionId)}>Bekijken</Button>} />
       {!ranked.length && <p className="text-xs">Geen oplossing binnen deze dekking{exact ? " met exact de gevraagde aantallen" : ""}. Dit bewijst niet dat packing onmogelijk is.</p>}
-      {selected && <><div className="flex flex-wrap gap-2"><Button className="rounded-xl" onClick={() => onPalletize(selected)}>Palletiseren</Button><Button variant="outline" className="rounded-xl" onClick={() => exportSolutionHtml(selected.box.reference, selected, resultProducts)}>HTML-rapport</Button></div><SaveSolution key={selected.solutionId} solution={selected} products={resultProducts} mode={resultMode} definitionId={initial?.definition_id ?? definitionId} basedOn={initial?.id} onSaved={onSaved} /><SolutionDetails key={selected.solutionId} solution={selected} products={resultProducts} /></>}
+      {selected && <><div className="flex flex-wrap gap-2"><Button className="rounded-xl" onClick={() => onPalletize(selected, resultProducts, { definitionId: initial?.definition_id ?? definitionId, mode: resultMode === 'custom' ? 'PERSO' : 'STOCK' })}>Palletiseren</Button><Button variant="outline" className="rounded-xl" onClick={() => void exportSolutionHtml(selected.box.reference, selected, resultProducts, records, undefined, { definitionId: initial?.definition_id ?? definitionId, mode: resultMode === 'custom' ? 'PERSO' : 'STOCK' }).catch(failure => setError(String(failure)))}>Interactief HTML-rapport</Button></div><SaveSolution key={selected.solutionId} solution={selected} products={resultProducts} mode={resultMode} definitionId={initial?.definition_id ?? definitionId} basedOn={initial?.id} onSaved={onSaved} /><SolutionDetails key={selected.solutionId} solution={selected} products={resultProducts} definitionId={initial?.definition_id ?? definitionId} mode={resultMode === 'custom' ? 'PERSO' : 'STOCK'} /></>}
       {!!response.result.rejected?.length && <details className="text-xs"><summary className="cursor-pointer">Afgekeurde maatwerkvarianten ({response.result.rejected.length})</summary><ul className="mt-3 space-y-2">{response.result.rejected.map((r, i) => <li key={i}>{r.pattern}: {r.errors.join(" ")}</li>)}</ul></details>}
     </section>}
   </section>;

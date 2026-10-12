@@ -1,6 +1,20 @@
 # Gebruikershandleiding
 
-Versie 0.6. Met account bewaart Supabase eigen masterrecords, resultaten en operationlogs; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
+Versie 0.7. Met account bewaart Supabase eigen masterrecords, resultaten en operationlogs; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
+
+## Interactieve viewer en offline rapport
+Dezelfde read-only viewer verschijnt bij Verpakking zoeken, Omdoos op maat, berekende/opgeslagen palletisatie en geopende saved/edited solutions. De aparte editor behoudt zijn selecteerbare editpreview; open een opgeslagen edited solution voor de generieke viewer. Plotly laadt pas wanneer de viewer in beeld komt.
+
+- Kies **3D**, **Bovenaanzicht**, **Vooraanzicht** of **Zijaanzicht**. Gebruik de Plotly-werkbalk voor roteren/zoomen/pannen en **Reset camera**. 3D vereist WebGL; probeer 2D als je browser/GPU geen 3D kan tonen.
+- Kies gevuld, draadmodel of beide. Dekking 0 = transparant, 1 = ondoorzichtig. Productkleuren, assen, raster en labels zijn afzonderlijk schakelbaar; hover toont originele X/Y/Z, maten, oriëntatie en laag.
+- **Exploded productafstand** en **laagafstand** zijn 0–100 mm. Dit zijn alleen weergave-offsets: fysieke placements, counts, validatie en nominale maten blijven onveranderd. Productafstand spreidt gerangschikte X/Y-startposities per laag; laagafstand spreidt Z-laagniveaus.
+- **Alle lagen** of één laag werkt voor doos en pallet. Validatiestatus en eventuele opgegeven compressibility worden onder de viewer getoond; tolerantie is geen materiaalgoedkeuring en maakt een rode overlap niet groen.
+- Timeline: Begin/Vorige/Play/Pause/Volgende/Einde; snelheden 0.25x/0.5x/1x/2x/4x. Eén stap = productplacement, op pallet één doos. Volg stap/totaal, huidig item, laag en geplaatst/resterend. Animatievolgorde is laag/Z/Y/X, geen bewezen fysieke montagevolgorde.
+- Bij meer dan 600 items toont de viewer de laatste 600 binnen de gekozen laag/stap en meldt de beperking. Kies een laag of eerdere stap om andere items te zien. De JSON blijft volledig; de weergave is geen bewijs van volledige collision-/transportcontrole.
+
+Klik **Export → Interactief HTML rapport** in de viewer om de huidige visualisatie-instellingen mee te nemen. De afzonderlijke **Interactief HTML**-acties bij resultaten/Solutions/Rapporten starten met standaardinstellingen. Bewaar het ene HTML-bestand en open het in een moderne browser; Plotly en JSON zijn ingebed, zonder CDN/internet/server/Dyad. Het rapport bevat tien secties van overzicht tot full solution JSON, plus bekende shape/definition, STOCK/PERSO, productNumber, doos, validatie/compressibility en palletinformatie. Ontbrekende bronmetadata wordt niet aangevuld met schattingen. Bestandsnamen volgen shape/product/vrije referentie + datum; zie [import/exportcontract](IMPORT_EXPORT.md). Deel rapporten bewust: ze kunnen vertrouwelijke gegevens bevatten.
+
+Palletberekening is annuleerbaar en gebeurt in een worker, net als packing/maatwerk. Twee identieke recente berekeningen kunnen uit een kleine tijdelijke cache komen; er is geen permanente opslag van die cache. **Debug / Performance** toont echte laatste/gemiddelde tijden en aantallen voor packing, scoring, custom carton, palletisatie, Plotly build, render en totaal. Een streep betekent nog niet gemeten; cachehits zijn geen nieuwe engineberekening. Geen universele freeze-vrijgarantie: grote JSON, apparaat/GPU en browser blijven bepalend. Offline openen, camerabediening en browserperformance zijn nog niet interactief geverifieerd.
 
 ## Testen zonder account
 Klik op **Testen zonder account** boven het aanmeldformulier, of open `/test`. Ben je al aangemeld, gebruik **Lokaal testen** in de header. De testwerkruimte begint leeg; er zijn geen verzonnen producten, masterrecords of voorbeeldresultaten.
@@ -90,4 +104,4 @@ Rapporten / Exports biedt opgeslagen solution HTML/JSON, pallet-JSON en een voll
 
 Debug bevat de bestaande lokale broninspectie met sheets/hidden-state/celtypen/formules/cache/SHA-256. Er worden geen formules uitgevoerd. XLSX tot 5 MB, 20.000 rijen/256 kolommen per blad en 200.000 cellen; limieten gelden na parsing en voorkomen niet iedere ZIP-bomb. Originele bestanden worden niet opgeslagen of gepubliceerd; alleen expliciet bevestigde importrecords en historiek gaan naar Supabase.
 
-Nog niet beschikbaar: automatische override-resolutie, intelligente patroonacties/restdoos-editor, compressieacceptatie/overrides, 3D, gedeelde teams en CERM-integratie. Zie [contract](ALGORITHM_CONTRACT.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).
+Nog niet beschikbaar: automatische override-resolutie, intelligente patroonacties/restdoos-editor, compressieacceptatie/overrides, gedeelde teams en CERM-integratie. Zie [contract](ALGORITHM_CONTRACT.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).

@@ -15,7 +15,7 @@ import { SolutionEditor } from "./SolutionEditor";
 import { ActivateSolution } from "./ActivateSolution";
 import { OperationLog } from "./OperationLog";
 function validated(record: SolutionRecord) { return parseSolutionSnapshot(JSON.stringify(record.snapshot)); }
-export function SolutionManagement({ initialId, onRecalculate, onPalletize }: { initialId?: string; onRecalculate(record: SolutionRecord): void; onPalletize(solution: Solution): void }) {
+export function SolutionManagement({ initialId, onRecalculate, onPalletize }: { initialId?: string; onRecalculate(record: SolutionRecord): void; onPalletize(solution: Solution, products: Product[]): void }) {
   const { records, write, saveSolution, busy } = usePackagingData();
   const [selectedId, setSelectedId] = useState(initialId ?? ""), [compare, setCompare] = useState<string[]>([]), [editing, setEditing] = useState(false);
   const selected = records.solutions.find(s => s.id === selectedId);
@@ -31,8 +31,8 @@ export function SolutionManagement({ initialId, onRecalculate, onPalletize }: { 
       <Button variant="outline" className="rounded-xl" disabled={!parsed || editing} onClick={() => performValidated(selected, () => onRecalculate(selected))}>Herberekenen als variant</Button>
       <Button variant="outline" className="rounded-xl" disabled={editing} onClick={() => performValidated(selected, () => toast.success("Snapshot opnieuw geometrisch gevalideerd."))}>Valideren</Button>
       <ActivateSolution record={selected} disabled={!parsed || editing} />
-      <Button variant="outline" className="rounded-xl" disabled={!parsed || editing} onClick={() => performValidated(selected, ({ solution }) => onPalletize(solution))}>Palletiseren</Button>
-      <Button variant="outline" className="rounded-xl" disabled={!parsed || editing} onClick={() => performValidated(selected, ({ solution, products }) => exportSolutionHtml(selected.name, solution, products))}>HTML-rapport</Button>
+      <Button variant="outline" className="rounded-xl" disabled={!parsed || editing} onClick={() => performValidated(selected, ({ solution, products }) => onPalletize(solution, products))}>Palletiseren</Button>
+      <Button variant="outline" className="rounded-xl" disabled={!parsed || editing} onClick={() => performValidated(selected, ({ solution, products }) => { void exportSolutionHtml(selected.name, solution, products, records, selected).catch(failure => toast.error(String(failure))); })}>Interactief HTML-rapport</Button>
       <Button variant="ghost" className="rounded-xl" disabled={busy || editing} onClick={() => { if (window.confirm(selected.status === "archived" ? "Solution als concept herstellen?" : "Solution archiveren? De fysieke historie blijft bestaan.")) void write("solutions", { status: selected.status === "archived" ? "draft" : "archived" }, selected.id); }}>{selected.status === "archived" ? "Herstellen" : "Archiveren"}</Button>
     </div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}{parsed && (editing ? <SolutionEditor key={selected.id} source={selected} {...parsed} onClose={() => setEditing(false)} onSaved={id => { setEditing(false); setSelectedId(id); }} /> : <SolutionDetails key={selected.id} {...parsed} />)}{!editing && <OperationLog title="Opgeslagen operationlog" operations={records.operations.filter(op => op.solution_id === selected.id).sort((a, b) => a.timestamp.localeCompare(b.timestamp)).map(op => ({ operationId: op.id, solutionId: op.solution_id, timestamp: op.timestamp, operationType: op.operation_type as EditorOperation["operationType"], parametersJSON: op.parameters_json, beforePlacementJSON: op.before_placement_json, afterPlacementJSON: op.after_placement_json, user: op.actor, note: op.note }))} />}</>}
   </section>;
