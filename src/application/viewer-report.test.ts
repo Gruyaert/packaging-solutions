@@ -14,6 +14,19 @@ const placements: Placement[] = [
 const product: Product = { productId: 'p', reference: 'Product', length: 10, width: 10, height: 10, quantity: 3, weightKg: 0.1, rotations: ['L-B-H'], maxInLength: 10, maxInWidth: 10, maxLayers: 10, allowCompression: true, compressibilityX: 2 };
 const data: ViewerData = { title: 'Eigen referentie', kind: 'packaging', placements, products: [product], bounds: { length: 30, width: 20, height: 30 }, validation: { status: 'valid', warnings: ['Nominale maten behouden.'] } };
 describe('Shared placement viewer and offline reports', () => {
+  it('defaults to Z-only rotation and preserves only supported rotation choices in exports', () => {
+    expect(createViewerModel(placements).state.rotation).toBe('z');
+    expect(createViewerModel(placements, { rotation: 'invalid' }).state.rotation).toBe('z');
+    expect(createViewerModel(placements, { rotation: 'free' }).state.rotation).toBe('free');
+    for (const rotation of ['z', 'free']) {
+      const report = buildInteractiveHtml({ ...data, settings: { rotation } }, 'window.Plotly = {};');
+      const json = report.match(/<script type="application\/json" id="packaging-solution-data">([\s\S]*?)<\/script>/)![1];
+      expect(JSON.parse(json).settings.rotation).toBe(rotation);
+      expect(JSON.parse(json).placements).toEqual(placements);
+      expect(report).toContain('Meer weergaveopties → Draaien');
+      expect(report).not.toContain('#21473b');
+    }
+  });
   it('orders animation spatially without mutating input; exploded only changes display', () => {
     const before = JSON.stringify(placements), model = createViewerModel(placements);
     expect(model.ordered.map(p => p.placementId)).toEqual(['a', 'b', 'c']);

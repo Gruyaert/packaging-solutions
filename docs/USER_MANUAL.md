@@ -2,10 +2,14 @@
 
 Versie 0.7. Met account bewaart Supabase eigen masterrecords, resultaten en operationlogs; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
 
+## Visuele invoerhulp
+De werkruimte gebruikt een wit-blauw thema met donkere tekst en pictogramnavigatie. Bij producten, doosvoorwaarden, omdozenbeheer en palletisatie toont een maatillustratie de assen: **X = lengte, Y = breedte, Z = hoogte**. Alle maten zijn millimeters; 25 cm vul je als 250 mm in. Productgewicht geldt per stuk; aantal geldt per omdoos. Binnenmaat is bruikbare doosruimte; buitenmaat omvat tweemaal de kartondikte per as. Pallethoogte is alleen de basis, maximale totale hoogte omvat ook alle dooslagen. Uitleg en eenheden staan naast de invoer; rotaties en stapellimieten zijn uitklapbaar. De figuur documenteert de assen, niet de werkelijk ingevoerde verhoudingen.
+
 ## Interactieve viewer en offline rapport
 Dezelfde read-only viewer verschijnt bij Verpakking zoeken, Omdoos op maat, berekende/opgeslagen palletisatie en geopende saved/edited solutions. De aparte editor behoudt zijn selecteerbare editpreview; open een opgeslagen edited solution voor de generieke viewer. Plotly laadt pas wanneer de viewer in beeld komt.
 
-- Kies **3D**, **Bovenaanzicht**, **Vooraanzicht** of **Zijaanzicht**. Gebruik de Plotly-werkbalk voor roteren/zoomen/pannen en **Reset camera**. 3D vereist WebGL; probeer 2D als je browser/GPU geen 3D kan tonen.
+- Kies **3D**, **Bovenaanzicht**, **Vooraanzicht** of **Zijaanzicht**. Standaard draai je alleen rond de **Z-as**: sleep links/rechts, de verticale kijkhoek blijft vast. Zoom met het muiswiel; **Reset camera** herstelt het overzicht. Onder **Meer weergaveopties → Draaien → Vrij · alle assen** kun je bewust vrije 3D-rotatie inschakelen. Terug naar Alleen Z-as herstelt de overzichtscamera. Deze keuze gaat mee bij export vanuit de viewer; zonder instelling is Z-as de standaard. 3D vereist WebGL; probeer 2D als je browser/GPU geen 3D kan tonen.
+- Palletisatie toont een ondoorzichtige grijze **palletbasis** van Z=0 tot de ingevoerde pallethoogte. De dozen beginnen daarboven; er wordt geen hoogte bij de placements opgeteld. De basis blijft zichtbaar bij laagfilters, begin van de animatie en draadmodel. Dit is het schematische fysieke volume, geen hout-/planken-/draagkrachtmodel.
 - Kies gevuld, draadmodel of beide. Dekking 0 = transparant, 1 = ondoorzichtig. Productkleuren, assen, raster en labels zijn afzonderlijk schakelbaar; hover toont originele X/Y/Z, maten, oriëntatie en laag.
 - **Exploded productafstand** en **laagafstand** zijn 0–100 mm. Dit zijn alleen weergave-offsets: fysieke placements, counts, validatie en nominale maten blijven onveranderd. Productafstand spreidt gerangschikte X/Y-startposities per laag; laagafstand spreidt Z-laagniveaus.
 - **Alle lagen** of één laag werkt voor doos en pallet. Validatiestatus en eventuele opgegeven compressibility worden onder de viewer getoond; tolerantie is geen materiaalgoedkeuring en maakt een rode overlap niet groen.

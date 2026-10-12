@@ -1,5 +1,13 @@
 # Changelog
 
+## UX/UI en palletcamera (aanvulling op 0.7)
+
+Wit-blauw thema met donkere tekst, pictogramnavigatie en stapsgewijze invoer. Herbruikbare X/Y/Z-maatillustraties voor producten, omdozen en pallets; expliciete mm/gewicht-per-stuk/aantal-per-doos/binnen-buitenmaat/hoogtelimietuitleg. Productrotaties en stapellimieten uitklapbaar, grotere invoervelden en gelabelde keuzes. Offline rapport volgt hetzelfde kleurthema.
+
+Gedeelde viewer tekent palletbasis op Z=0..palletHeight als schematisch ondoorzichtig volume in 3D en projecties. Bestaande placements beginnen al op palletHeight en blijven ongewijzigd. Standaard Z-asrotatie via horizontale pointerbeweging met vaste verticale eye/radius en up-vector; Plotly vrije drag/modebarkeuzes uitgeschakeld in deze modus. Vrije orbit-rotatie expliciet onder Meer weergaveopties, terugschakelen/reset herstelt overzicht. Camera-updates met framecoalescing en backpressure, pointer/framecleanup bij teardown. Keuze genormaliseerd en opgenomen in viewerexport; app en HTML delen runtime.
+
+Verificatie: bronreview van maatlegendes, thema, viewer, adapters en fysieke pallet-Z-conventie. Nieuwe regressies voor rotatienormalisatie/export en geserialiseerde runtime met DOM/Plotly-stubs (basisgeometrie, geen dubbele hoogte, beperkte camerabeweging, vrije modus, reset/cleanup). Tests **geschreven maar niet uitgevoerd**. Typecheck/build/Vitest/lint en echte browser/WebGL/touch/offline/production-minificatieacceptatie niet uitgevoerd; geen uitvoer-/browsertool beschikbaar. Geen database-, dependency- of enginewijzigingen; geen serverrestart.
+
 ## Intelligente Excelherkenning met manuele fallback (aanvulling op 0.7)
 
 Wijziging: pure lokale herkenner voor bekende NL/EN-carton-/shapeheaders met case/separator/diakritiek/mm-normalisatie; automatische kopregel/zichtbaar-werkbladselectie binnen eerste 50 rijen. Duplicaten en gelijke kandidaat-scores worden niet gegokt. MasterImport start met intelligente herkenning, toont toegepaste bronkoppelingen, opent manuele fallback bij missende/onduidelijke velden en behoudt veilige partial matches. Manueel aanpassen altijd beschikbaar; herkenning van gekozen kopregel apart mogelijk. Sheet/headerwissel wist stale mapping/bevestiging. Preview/fysieke eenheidsbevestiging/default-overwrite/keys/numeric/boolean/2000-rijchecks en atomische sync blijven verplicht.

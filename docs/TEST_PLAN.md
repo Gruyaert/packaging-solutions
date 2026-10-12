@@ -2,6 +2,17 @@
 
 Versie 0.7 met intelligente Excelimport-uitbreiding. B4-packingfeedback is bron van golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: feedbackcases, lokale testmodus, editor, viewer/offline-export en automatische Excelherkenning met manuele fallback. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
 
+## UX/UI, palletbasis en Z-asrotatie — aanvullende acceptatie
+Geschreven, **niet uitgevoerd**: extra viewer-report-regressie voor standaard/ongeldige/vrije rotatie en JSON/exportbehoud; twee tests in [viewer-interaction.test.ts](../src/application/viewer-interaction.test.ts) voor zelfstandig geserialiseerde runtime met minimale DOM-/Plotly-stubs. Basis-Z 0..palletHeight, dozen vanaf palletHeight zonder dubbele offset, immutable result; horizontaal slepen met vaste eye-Z/radius/up, expliciete free orbit, terugschakelen/reset en cleanup. Stubs zijn geen echte browser/WebGL-acceptatie. Geen typecheck/build/Vitest/lint uitgevoerd.
+
+Nog interactief te verifiëren, online én gedownload HTML:
+- Wit/blauw/donkere tekst, leesbare eenheden/labels op 320/768/1280/1920 px, focus/keyboard, geen horizontale paginascroll; geavanceerde opties bereikbaar.
+- Product/omdoos/pallet-legendes komen overeen met invoer: mm, per-stukgewicht, aantal per omdoos, binnen/buiten/karton, pallethoogte versus totale hoogte. Legendes geen automatisch geschaalde meetresultaten.
+- Mouse/touch horizontaal/verticaal/diagonaal slepen: standaard alleen azimut, geen kantelen/rollen. Wheelzoom behouden bij laag/opacity/timelinewijziging; geen camera-sprongen of concurrerende updates.
+- Vrije rotatie pas na bewuste keuze; terug naar Z-as/reset overzicht. Export bewaart keuze, andere exportingangen standaard Z-as. Modebar mag Z-beperking niet omzeilen.
+- Palletbasis zichtbaar in 3D/top/front/side, wire/filled/both, bij stap 0, één laag en overhang; geen verplaatsing van fysieke dozen. Bij pallethoogte 0 degeneratie van basisvolume controleren.
+- Tabwissel/teardown tijdens drag/relayout/render/async loading: geen achterblijvende pointercapture/frame/observer/Promise-fouten. Echte file://-export vanuit productiebuild zelfstandig met netwerk uit.
+
 ## Intelligente Excelimport — aanvullende acceptatie
 [excel-mapping.test.ts](../src/application/excel-mapping.test.ts): tien geschreven tests voor NL-cartonlabels/origineelbehoud, EN/reordering/separators/mm, shapeformat zonder productmapping, preamble/relevant zichtbaar werkblad, dubbele doelkandidaten, gelijke sheet-/kopregelscores, onbekende kolommen/cm/buitenmaten, verborgen sheet alleen expliciet, formula-headerweigering en 50-rijgrens/partial/no-match. Synthetische testdata, geen echte bronbestanden. **Niet uitgevoerd**. Bestaande application-testconfig omvat het bestand.
 

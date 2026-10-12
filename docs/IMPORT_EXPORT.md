@@ -9,6 +9,8 @@ JSON is waarheid: `<script type="application/json" id="packaging-solution-data">
 
 Rapportsecties: 1 Overzicht, 2 Shape / Definition, 3 Producten, 4 Verpakking (placements), 5 3D / Projecties, 6 Validatie / compressibility, 7 Laagopbouw, 8 Palletisatie, 9 Instellingen, 10 Technische data/full JSON. Viewers tonen hoogstens de laatste 600 items binnen de gekozen laag/timeline; de volledige data blijft in JSON. Exploded/timeline/camera wijzigen nooit fysieke placements of ValidationJSON. Instellingen van Export in de viewer zijn de huidige weergave; afzonderlijke rapportacties starten met defaults.
 
+De genormaliseerde instelling `rotation` is `z` (standaard, alleen horizontale Z-asrotatie) of `free` (bewust gekozen vrije orbit). Ongeldige/ontbrekende waarde wordt `z`. De rotatiemodus gaat mee, niet de exacte actuele camera-eye/zoompositie. Wit-blauw rapport en app gebruiken dezelfde viewer. Palletbasis wordt uit `pallet.settings` getekend als schematisch volume op Z=0..palletHeight; fysieke doosplacements beginnen al boven de basis en worden niet gewijzigd. Geen planken-/materiaalmodel of certificaat toegevoegd.
+
 Bestandsnamen, datum in ISO UTC en veilige segmenten:
 - SHAPE_STANDARD (scope SHAPE): `verpakkingsrapport_[ShapeID]_[ShapeVariantID]_[PackagingMode]_[datum].html`.
 - PRODUCT_OVERRIDE (scope PRODUCT): `verpakkingsrapport_product_[ProductNumber]_[PackagingMode]_[datum].html`.

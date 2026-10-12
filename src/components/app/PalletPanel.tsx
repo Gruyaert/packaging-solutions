@@ -13,6 +13,7 @@ import { usePackagingData } from "./PackagingDataProvider";
 import { RecordTable } from "./RecordTable";
 import { NumberField } from "./ProductInputs";
 import { PalletViewer } from "./PalletViewer";
+import { DimensionGuide } from "./DimensionGuide";
 export function PalletPanel({ solution, products = [], context }: { solution?: Solution; products?: Product[]; context?: { definitionId?: string; mode?: "STOCK" | "PERSO" } }) {
   const { records, write, busy, storage } = usePackagingData();
   const [openedPallet, setOpenedPallet] = useState<string>('');
@@ -57,7 +58,9 @@ export function PalletPanel({ solution, products = [], context }: { solution?: S
     } catch (failure) { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); setResults([]); setError(failure instanceof Error ? failure.message : "Palletisatie mislukt."); }
   };
   const best = results.find(r => r.pattern === selectedPattern) ?? results[0];
-  return <section className="min-w-0 space-y-5" aria-label="Palletisatie"><div><h1 className="text-2xl font-semibold">Palletisatie</h1><p className="mt-1 text-xs text-muted-foreground">Kies een doos of solution, bereken patronen en bewaar het gekozen resultaat met bron en instellingen.</p></div>
+  return <section className="min-w-0 space-y-5" aria-label="Palletisatie"><div><h1 className="text-2xl font-semibold">Palletisatie</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Kies een omdoos of verpakkingsoplossing, stel je pallet in en vergelijk de stapelpatronen.</p></div>
+    <DimensionGuide kind="pallet" />
+    {source === "manual" && <DimensionGuide kind="box" />}
     {calculating && <Button variant="outline" className="rounded-xl" onClick={() => { cancel(); setError('Palletberekening geannuleerd.'); }}>Annuleren</Button>}
     <fieldset disabled={calculating} className="min-w-0 space-y-5">
     <label className="block space-y-1 text-xs">Bron<select className="h-10 w-full rounded-xl border bg-card px-3" value={source} onChange={e => { setSource(e.target.value); setResults([]); setSaved(undefined); setError(""); }}><option value="database">{storage === "local" ? "Omdoos uit lokale testwerkruimte · filterbare lijst" : "Omdoos uit Supabase · filterbare lijst"}</option><option value="packaging">Gekozen packaging solution</option><option value="saved">{storage === "local" ? "Opgeslagen solution uit lokale testwerkruimte" : "Opgeslagen solution uit Supabase"}</option><option value="manual">Handmatige buitenmaten</option><option value="json">Lokale solution-JSON</option></select></label>
