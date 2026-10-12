@@ -36,11 +36,12 @@ Gebruik de acht hoofdtabs; Debug / Performance is discreet rechts. Iedere tabel 
 ## Omdozenbeheer
 1. Voeg een referentie, beschrijving/materiaal, positieve **interne L/B/H in mm** en niet-negatieve kartondikte toe.
 2. Bewerk bestaande records of activeer/deactiveer ze. Er is geen hard delete.
-3. Kies voor Excelimport het XLSX-bestand, werkblad en koprij. Koppel alle verplichte doelvelden expliciet; mappings worden niet geraden.
-4. Controleer de volledige filterbare preview (nieuw/bijwerken/ongewijzigd) en alle waarden. Fouten of dubbele keys blokkeren de volledige import.
-5. Bevestig mapping en millimetereenheid en synchroniseer. Records worden atomisch ingevoegd/bijgewerkt; ontbrekende bronrecords worden **niet verwijderd**. Importhistoriek bewaart bestandsnaam, checksum en aantal.
+3. Open **Excelmaster synchroniseren** en kies het XLSX-bestand. **1. Intelligent herkennen** zoekt lokaal het werkblad, de kopregel en bekende Nederlandse/Engelse kolommen. Je ziet alle voorgestelde koppelingen; het bestand wordt niet naar een AI-dienst gestuurd.
+4. Bij ontbrekende of dubbelzinnige matches opent **2. Manueel mappen / aanpassen** met de veilige gedeeltelijke koppelingen ingevuld. Kies zelf werkblad, kopregel en kolommen. Ook bij succesvolle herkenning is deze tweede optie altijd beschikbaar. Een werkblad-/kopregelwijziging wist oude koppelingen; **Kolommen in deze kopregel herkennen** vult een nieuw voorstel voor die rij in. De eerste knop analyseert opnieuw het hele bestand.
+5. Controleer de volledige filterbare preview (nieuw/bijwerken/ongewijzigd), interne maten en mm-eenheid. De herkenner rekent geen cm/inch of buitenmaten om. Formulekoppen/unknown labels worden niet geraden. Fouten, ontbrekende velden of dubbele keys blokkeren de volledige import.
+6. Bevestig mapping, preview en millimetereenheid en synchroniseer. Records worden atomisch ingevoegd/bijgewerkt; ontbrekende bronrecords worden **niet verwijderd**. Importhistoriek bewaart bestandsnaam, checksum en aantal. Herkenning importeert nooit vanzelf.
 
-Ongekoppelde optionele velden worden leeg/0, actief=true en geblokkeerd=false. Dit kan bestaande waarden vervangen; de preview toont deze doelwaarden. Maximaal 2000 gegevensrijen per sync. Upload geen onbetrouwbare XLSX-bestanden.
+Herkenning zoekt in de eerste 50 rijen van zichtbare sheets; verborgen sheets, latere kopregels en onbekende kolomnamen kun je manueel kiezen. Bij meerdere even waarschijnlijke sheets/kopregels wordt geen automatische mapping toegepast. Ongekoppelde optionele velden worden leeg/0, actief=true en geblokkeerd=false; dit kan bestaande waarden vervangen en wordt in de preview getoond. Iedere wijziging wist de bevestiging. Maximaal 2000 gegevensrijen per sync. Upload geen onbetrouwbare XLSX-bestanden.
 
 ## Shapes masterdata
 Filter ShapeID, variant, beschrijving/productgroep, Format A/B/H en status. Vrije masterbewerking is niet beschikbaar; gebruik de gecontroleerde Excelmapping/preview. Sleutel = ShapeID + variant. Actieve, niet-geblokkeerde shapes kunnen een definitie starten. De app interpreteert Format A/B/H niet automatisch als product-L/B/H.

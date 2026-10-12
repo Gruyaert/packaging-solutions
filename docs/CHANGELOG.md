@@ -1,5 +1,13 @@
 # Changelog
 
+## Intelligente Excelherkenning met manuele fallback (aanvulling op 0.7)
+
+Wijziging: pure lokale herkenner voor bekende NL/EN-carton-/shapeheaders met case/separator/diakritiek/mm-normalisatie; automatische kopregel/zichtbaar-werkbladselectie binnen eerste 50 rijen. Duplicaten en gelijke kandidaat-scores worden niet gegokt. MasterImport start met intelligente herkenning, toont toegepaste bronkoppelingen, opent manuele fallback bij missende/onduidelijke velden en behoudt veilige partial matches. Manueel aanpassen altijd beschikbaar; herkenning van gekozen kopregel apart mogelijk. Sheet/headerwissel wist stale mapping/bevestiging. Preview/fysieke eenheidsbevestiging/default-overwrite/keys/numeric/boolean/2000-rijchecks en atomische sync blijven verplicht.
+
+Waarom: gebruiker vraagt slimme eerste optie en handmatige tweede optie als herkenning faalt. Eerdere verbodsgrens op kolomlabel-suggesties is hierdoor expliciet vervangen door uitlegbare voorstellen, niet automatische data-import. Geen externe AI-service, nieuwe kosten/credentials of bestandupload; geen onbekende materiaal-/as-/binnenmaatsemantiek geraden. Geen cm/inch- of buiten→binnenconversie, geen shapeformat→productassenmapping. Lokale testmodus en Supabase-ownerisolatie ongewijzigd.
+
+Verificatie: tien synthetische herkenningsregressies geschreven; relevante bron/types/UI/preview/sync-dataflow handmatig gelezen. Typecheck/build/Vitest/lint/browser en daadwerkelijke Excelbronacceptatie **niet uitgevoerd**, geen beschikbare uitvoer-/browsertool. Geen productie-imports, schema/dependencywijzigingen of serverrestart. Import/exportcontract, gebruikers-/ontwikkelhandleiding en testplan bijgewerkt.
+
 ## Interactive Packaging Viewer / offline rapport / performance (0.7)
 
 Wijziging: gedeeld immutable placement-model en Plotly-runtime voor search/custom/pallet/saved/edited oplossingen en HTML. 3D met camera-/modebarbediening/reset/hover, gevuld/wire/beide, opacity/productkleuren/assen/grid/labels, visuele product-/laagafstand 0–100 mm, layerselector, top/front/side-projecties en product-/doos-per-stap timeline met alle controls/snelheden/counters. Zichtbaarheidsgestuurd laden/renderen, timer/observer/Plotly cleanup, maximaal 600 zichtbare items met expliciete melding; fysieke JSON volledig behouden. React-laadmelding buiten de imperative host voorkomt conflicterend DOM-eigenaarschap/removeChild.

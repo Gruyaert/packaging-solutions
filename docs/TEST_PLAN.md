@@ -1,6 +1,20 @@
 # Testplan
 
-Versie 0.7. B4-packingfeedback is bron van golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: feedbackcases, lokale testmodus, editor en interactive viewer/offline-exportverzoek. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.7 met intelligente Excelimport-uitbreiding. B4-packingfeedback is bron van golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: feedbackcases, lokale testmodus, editor, viewer/offline-export en automatische Excelherkenning met manuele fallback. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+
+## Intelligente Excelimport — aanvullende acceptatie
+[excel-mapping.test.ts](../src/application/excel-mapping.test.ts): tien geschreven tests voor NL-cartonlabels/origineelbehoud, EN/reordering/separators/mm, shapeformat zonder productmapping, preamble/relevant zichtbaar werkblad, dubbele doelkandidaten, gelijke sheet-/kopregelscores, onbekende kolommen/cm/buitenmaten, verborgen sheet alleen expliciet, formula-headerweigering en 50-rijgrens/partial/no-match. Synthetische testdata, geen echte bronbestanden. **Niet uitgevoerd**. Bestaande application-testconfig omvat het bestand.
+
+Bronreview: herkenner/schema-velden, UI-voorstel→preview→bevestiging→sync, bevestigingreset en behouden lokale/Supabase-sync. Typecheck/build/Vitest/lint/browser/echte XLSX-tests **niet uitgevoerd**; geen beschikbare uitvoer-/browsertool. Geen productie-imports of bronuploads voor verificatie.
+
+Nog uit te voeren:
+- Bekende carton-/shapeheaders automatisch herkennen, kopregel onder titel vinden, kolommen ongeordend en NL/EN; juiste data/changes zichtbaar vóór bevestigen.
+- Unknown/duplicate kolommen en gelijke sheets/kopregels: niets gokken, manuele UI bereikbaar met veilige partial matches; verborgen sheet/rij >50 expliciet kiezen.
+- Na automatische herkenning manueel corrigeren/ontkoppelen; sheet/headerwijziging reset mapping en bevestiging; knop voor gekozen kopregel vult nieuwe matches; globale knop heranalyseert werkboek.
+- Numeric/boolean/cache/key/duplicate/2000-rijfouten blokkeren volledige sync. Auto-voorstel is geen data-/mm-/binnenmaatvalidatie; geen automatische writes.
+- Optionele niet-gekoppelde defaults en overwrite zichtbaar; gebruiker expliciet bevestigen; failed sync behoudt invoer voor correctie.
+- Cloud schrijft uitsluitend bevestigde own-user records/history; `/test` geen packaging API/RPC; XLSX geen AI-dienst/browserpersistente mapping-upload.
+- Responsieve controls/keyboard en beide importschermen functioneel; echte Omdozen-/Shapesbron apart door gebruiker testen zonder automatische publicatie.
 
 ## Viewer / offline / performance 0.7
 [viewer-report.test.ts](../src/application/viewer-report.test.ts) bevat elf geschreven regressies: originele data behouden bij animatiesortering/exploded; laag/stapfilters; top/front/side-projecties en instellingnormalisatie; 10.000-item bron met maximaal 600 renderitems; script-breakout escaping/JSON roundtrip; embedded runtime/JSON/rapportsecties/geen externe scripts en script-syntaxis; shape/product/free bestandsnamen; packaging/pallet-adapters en unsaved product-/compressibilitybehoud; zelfstandig geserialiseerd model; clone/LRU/clear-cache; oversize/bytebudget. **Niet uitgevoerd.** De reporttest gebruikt een kleine Plotly-stub voor structuur/syntaxis, geen bewijs dat echte Plotly offline werkt. Tests vallen onder bestaande application Vitest-config.
