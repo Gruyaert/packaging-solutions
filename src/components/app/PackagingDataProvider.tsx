@@ -6,8 +6,8 @@ import { useSession } from "@/components/auth/SessionContext";
 import type { PackagingRecords, RecordKind, Snapshot } from "@/infrastructure/packaging-records";
 import { parseSolutionSnapshot } from "@/infrastructure/solution-snapshot";
 
-const kinds: RecordKind[] = ["cartons", "shapes", "definitions", "solutions", "imports", "pallets"];
-const empty: PackagingRecords = { cartons: [], shapes: [], definitions: [], solutions: [], imports: [], pallets: [] };
+const kinds: RecordKind[] = ["cartons", "shapes", "definitions", "solutions", "imports", "pallets", "operations"];
+const empty: PackagingRecords = { cartons: [], shapes: [], definitions: [], solutions: [], imports: [], pallets: [], operations: [] };
 async function loadRecords(userId: string): Promise<PackagingRecords> {
   const entries = await Promise.all(kinds.map(async kind => {
     const rows: unknown[] = [];
@@ -56,15 +56,27 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
     return !!await perform(async () => { const { error } = await supabase.rpc("sync_packaging_master", { p_kind: kind, p_filename: filename, p_checksum: checksum, p_rows: rows }); if (error) throw new Error(error.message); return true; });
   }
   async function activate(id: string) {
-    return !!await perform(async () => { const { error } = await supabase.rpc("activate_packaging_solution", { p_id: id }); if (error) throw new Error(error.message); return true; });
+    return !!await perform(async () => {
+      const record = query.data?.solutions.find(s => s.id === id);
+      if (!record) throw new Error("Solution niet gevonden in de eigen werkruimte.");
+      parseSolutionSnapshot(JSON.stringify(record.snapshot));
+      const { error } = await supabase.rpc("activate_packaging_solution", { p_id: id });
+      if (error) throw new Error(error.message);
+      return true;
+    });
   }
   async function saveSolution(snapshot: Snapshot, name: string, definitionId: string | null, basedOn?: string, sourceMode?: "search" | "custom") {
     try {
       const parsed = parseSolutionSnapshot(JSON.stringify(snapshot));
       if (!name.trim()) throw new Error("Geef de oplossing een naam.");
       const parent = query.data?.solutions.find(s => s.id === basedOn);
+      if (parsed.editor) {
+        if (!parent || parsed.editor.sourceSolutionId !== parent.id) throw new Error("Edited solution moet de oorspronkelijke bron behouden.");
+        const original = parseSolutionSnapshot(JSON.stringify(parent.snapshot));
+        if (JSON.stringify(parsed.products) !== JSON.stringify(original.products) || JSON.stringify(parsed.solution.box) !== JSON.stringify(original.solution.box) || JSON.stringify(parsed.solution.spacing) !== JSON.stringify(original.solution.spacing) || JSON.stringify(parsed.solution.counts) !== JSON.stringify(original.solution.counts) || JSON.stringify(parsed.editor.baselineCounts) !== JSON.stringify(original.solution.counts)) throw new Error("Editor v1 behoudt producten, doos, speling en oorspronkelijke aantallen.");
+      }
       const packagingMode = sourceMode ? sourceMode === "custom" ? "PERSO" : "STOCK" : parent?.packaging_mode ?? "STOCK";
-      return write("solutions", { name: name.trim(), definition_id: definitionId, packaging_mode: packagingMode, metadata: parent?.metadata ?? {}, based_on: basedOn ?? null, snapshot: { contractVersion: "0.3", ...parsed }, status: "draft", created_from: basedOn ? "variant" : sourceMode === "custom" ? "custom" : "packing" });
+      return write("solutions", { name: name.trim(), definition_id: definitionId, packaging_mode: packagingMode, metadata: parent?.metadata ?? {}, based_on: basedOn ?? null, snapshot: { contractVersion: "0.3", ...parsed }, status: "draft", created_from: parsed.editor ? "edited" : basedOn ? sourceMode ? "variant" : "duplicate" : sourceMode === "custom" ? "custom" : "packing" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Ongeldige solution."); return undefined; }
   }
   return <PackagingDataContext.Provider value={{ storage: "supabase", records: query.data ?? empty, loading: query.isLoading, error: query.error?.message ?? "", busy, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;

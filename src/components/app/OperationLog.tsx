@@ -1,0 +1,9 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import type { EditorOperation } from "@/domain/packing/editor";
+export function OperationLog({ operations, title = "Operationlog" }: { operations: EditorOperation[]; title?: string }) {
+  const [page, setPage] = useState(0);
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(operations.length / 10) - 1));
+  const rows = [...operations].reverse().slice(currentPage * 10, currentPage * 10 + 10);
+  return <section className="space-y-3 rounded-2xl border bg-card p-4"><h3 className="font-semibold">{title} <span className="text-xs text-muted-foreground">· {operations.length} acties</span></h3>{!rows.length && <p className="text-xs text-muted-foreground">Geen gelogde acties voor deze solution.</p>}{rows.map(op => <details key={op.operationId} className="rounded-xl border bg-background p-3 text-xs"><summary className="cursor-pointer break-words"><strong>{op.operationType}</strong> · {new Date(op.timestamp).toLocaleString("nl-BE")} {op.note && `· ${op.note}`}</summary><p className="mt-2 break-all">Actor: {op.user} · solution: {op.solutionId} · operation: {op.operationId}</p><pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-secondary/40 p-3">{JSON.stringify({ parametersJSON: op.parametersJSON, beforePlacementJSON: op.beforePlacementJSON, afterPlacementJSON: op.afterPlacementJSON }, null, 2)}</pre></details>)}{operations.length > 10 && <div className="flex items-center gap-3"><Button size="sm" variant="outline" className="rounded-xl" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Nieuwere</Button><span className="text-xs">Pagina {currentPage + 1}</span><Button size="sm" variant="outline" className="rounded-xl" disabled={(currentPage + 1) * 10 >= operations.length} onClick={() => setPage(currentPage + 1)}>Oudere</Button></div>}</section>;
+}

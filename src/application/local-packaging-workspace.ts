@@ -16,7 +16,7 @@ const owner = "local-test";
 export type WritableKind = "cartons" | "definitions" | "solutions" | "pallets";
 
 export function createLocalPackagingWorkspace() {
-  let records: PackagingRecords = { cartons: [], shapes: [], definitions: [], solutions: [], imports: [], pallets: [] };
+  let records: PackagingRecords = { cartons: [], shapes: [], definitions: [], solutions: [], imports: [], pallets: [], operations: [] };
   function write(kind: WritableKind, values: Record<string, unknown>, id?: string): { id: string } {
     const recordId = id ?? crypto.randomUUID(), now = new Date().toISOString();
     const base = { id: recordId, user_id: owner, modified_on: now };
@@ -45,7 +45,9 @@ export function createLocalPackagingWorkspace() {
         const changes = solutionUpdate.parse(values);
         if (changes.status === "archived" && records.definitions.some(d => d.current_solution_id === id)) throw new Error("Activeer eerst een andere solution voordat je de huidige archiveert.");
         if (changes.status === "active" && old.status !== "active") throw new Error("Gebruik Als actief instellen voor het activeren van een solution.");
-        records = { ...records, solutions: records.solutions.map(s => s.id === id ? { ...s, ...changes, modified_on: now } : s) };
+        const updated = { ...old, ...changes, modified_on: now };
+        const changedMetadata = updated.name !== old.name || JSON.stringify(updated.metadata) !== JSON.stringify(old.metadata);
+        records = { ...records, solutions: records.solutions.map(s => s.id === id ? updated : s), operations: changedMetadata ? [...records.operations, { id: crypto.randomUUID(), user_id: owner, solution_id: recordId, timestamp: now, operation_type: "EDIT_METADATA", parameters_json: { beforeName: old.name, afterName: updated.name, beforeMetadata: old.metadata, afterMetadata: updated.metadata }, before_placement_json: [], after_placement_json: [], actor: owner, note: "" }] : records.operations };
       } else {
         const parsed = solutionSchema.parse(values);
         const snapshot: Snapshot = { contractVersion: "0.3", ...parseSolutionSnapshot(JSON.stringify(parsed.snapshot)) };
@@ -54,8 +56,17 @@ export function createLocalPackagingWorkspace() {
         const parent = records.solutions.find(s => s.id === parsed.based_on);
         if (parsed.based_on && (!parent || parent.definition_id !== parsed.definition_id || parent.packaging_mode !== parsed.packaging_mode)) throw new Error("Een variant moet bij de oorspronkelijke definitie en modus blijven.");
         if (parsed.status !== "draft") throw new Error("Een nieuwe solution wordt als concept opgeslagen; activeren is een aparte handeling.");
+        if (parsed.created_from === "edited" && !snapshot.editor) throw new Error("Edited solution vereist een audit.");
+        if (snapshot.editor) {
+          if (!parent || snapshot.editor.sourceSolutionId !== parent.id || parsed.created_from !== "edited") throw new Error("Edited solution moet de oorspronkelijke bron behouden.");
+          const original = parseSolutionSnapshot(JSON.stringify(parent.snapshot));
+          if (JSON.stringify(snapshot.products) !== JSON.stringify(original.products) || JSON.stringify(snapshot.solution.box) !== JSON.stringify(original.solution.box) || JSON.stringify(snapshot.solution.spacing) !== JSON.stringify(original.solution.spacing) || JSON.stringify(snapshot.solution.counts) !== JSON.stringify(original.solution.counts) || JSON.stringify(snapshot.editor.baselineCounts) !== JSON.stringify(original.solution.counts)) throw new Error("Editor v1 behoudt producten, doos, speling en oorspronkelijke aantallen.");
+        }
         const row: SolutionRecord = { ...parsed, snapshot, ...base, created_on: now };
-        records = { ...records, solutions: [...records.solutions, row] };
+        const operations = snapshot.editor?.operations.map(op => ({ id: op.operationId, user_id: owner, solution_id: recordId, timestamp: op.timestamp, operation_type: op.operationType, parameters_json: op.parametersJSON, before_placement_json: op.beforePlacementJSON, after_placement_json: op.afterPlacementJSON, actor: owner, note: op.note })) ?? [];
+        if (!snapshot.editor && parent && (parsed.created_from === "duplicate" || parsed.created_from === "variant")) operations.push({ id: crypto.randomUUID(), user_id: owner, solution_id: recordId, timestamp: now, operation_type: parsed.created_from === "duplicate" ? "DUPLICATE_SOLUTION" : "RECALCULATE", parameters_json: { sourceSolutionId: parent.id }, before_placement_json: structuredClone(parent.snapshot.solution.placements), after_placement_json: structuredClone(snapshot.solution.placements), actor: owner, note: "" });
+        if (operations.some(op => records.operations.some(existing => existing.id === op.id))) throw new Error("Deze editoroperaties zijn al opgeslagen; open een nieuw duplicaat.");
+        records = { ...records, solutions: [...records.solutions, row], operations: [...records.operations, ...operations] };
       }
     } else {
       if (id) throw new Error("Opgeslagen palletresultaten zijn onveranderlijk.");
@@ -98,16 +109,19 @@ export function createLocalPackagingWorkspace() {
       const definition = records.definitions.find(d => d.id === solution.definition_id);
       if (!definition || definition.packaging_mode !== solution.packaging_mode) throw new Error("De solution past niet bij deze definitie.");
     }
+    const oldCurrent = records.definitions.find(d => d.id === solution.definition_id)?.current_solution_id ?? null;
+    if (solution.status === "active" && (!solution.definition_id || oldCurrent === id)) return true;
     records = { ...records,
       solutions: records.solutions.map(s => s.id === id ? { ...s, status: "active", modified_on: now } : solution.definition_id && s.definition_id === solution.definition_id && s.status === "active" ? { ...s, status: "draft", modified_on: now } : s),
       definitions: records.definitions.map(d => d.id === solution.definition_id ? { ...d, current_solution_id: id, modified_on: now } : d),
+      operations: [...records.operations, { id: crypto.randomUUID(), user_id: owner, solution_id: id, timestamp: now, operation_type: "MAKE_CURRENT", parameters_json: { definition: solution.definition_id, oldCurrent, newCurrent: id }, before_placement_json: structuredClone(records.solutions.find(s => s.id === oldCurrent)?.snapshot.solution.placements ?? []), after_placement_json: structuredClone(solution.snapshot.solution.placements), actor: owner, note: "" }],
     };
     return true;
   }
   function saveSolution(snapshot: Snapshot, name: string, definitionId: string | null, basedOn?: string, sourceMode?: "search" | "custom") {
     const parent = records.solutions.find(s => s.id === basedOn);
     const packagingMode = sourceMode ? sourceMode === "custom" ? "PERSO" : "STOCK" : parent?.packaging_mode ?? "STOCK";
-    return write("solutions", { name, definition_id: definitionId, packaging_mode: packagingMode, based_on: basedOn ?? null, created_from: basedOn ? "variant" : sourceMode === "custom" ? "custom" : "packing", snapshot, metadata: structuredClone(parent?.metadata ?? {}), status: "draft" });
+    return write("solutions", { name, definition_id: definitionId, packaging_mode: packagingMode, based_on: basedOn ?? null, created_from: snapshot.editor ? "edited" : basedOn ? sourceMode ? "variant" : "duplicate" : sourceMode === "custom" ? "custom" : "packing", snapshot, metadata: structuredClone(parent?.metadata ?? {}), status: "draft" });
   }
   return { getRecords: () => records, write, sync, activate, saveSolution };
 }

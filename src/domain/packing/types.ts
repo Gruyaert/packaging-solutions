@@ -4,7 +4,7 @@ export interface Dimensions { length: number; width: number; height: number }
 export interface Product extends Dimensions {
   productId: string; reference: string; weightKg: number; quantity: number;
   rotations: Orientation[]; maxInLength: number; maxInWidth: number; maxLayers: number;
-  compressibilityX?: number; compressibilityY?: number; compressibilityZ?: number;
+  compressibilityX?: number; compressibilityY?: number; compressibilityZ?: number; allowCompression?: boolean;
 }
 export interface Spacing { length: number; width: number; height: number }
 export interface Placement extends Dimensions {

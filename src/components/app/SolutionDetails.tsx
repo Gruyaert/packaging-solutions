@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import type { Product, Solution } from "@/domain/packing/types";
 import { outside } from "@/domain/packing/types";
 import { downloadSolutionSnapshot } from "@/infrastructure/solution-snapshot";
-export function SolutionDetails({ solution, products }: { solution: Solution; products: Product[] }) {
+import type { EditorAudit } from "@/domain/packing/editor";
+export function SolutionDetails({ solution, products, editor }: { solution: Solution; products: Product[]; editor?: EditorAudit }) {
   const [layer, setLayer] = useState(0), [page, setPage] = useState(0);
   const layers = [...new Set(solution.placements.map(p => p.layerIndex))];
   const outer = outside(solution.box);
   const colors = ["var(--primary)", "var(--foreground)", "var(--muted-foreground)", "var(--accent-foreground)", "var(--ring)"];
   return <section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-5" aria-label="Solutiondetail">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">{solution.box.reference} · {solution.solutionId}</h3><Button variant="outline" className="rounded-xl" onClick={() => downloadSolutionSnapshot(solution, products)}>Solution JSON downloaden</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">{solution.box.reference} · {solution.solutionId}</h3><Button variant="outline" className="rounded-xl" onClick={() => downloadSolutionSnapshot(solution, products, editor)}>Solution JSON downloaden</Button></div>
     <p className="text-sm">Binnenmaat {solution.box.length.toFixed(2)} × {solution.box.width.toFixed(2)} × {solution.box.height.toFixed(2)} mm · buitenmaat {outer.length.toFixed(2)} × {outer.width.toFixed(2)} × {outer.height.toFixed(2)} mm</p>
     <p className="text-sm">{(solution.utilization * 100).toFixed(1)}% benutting · {(solution.air * 100).toFixed(1)}% lucht · {solution.weightKg.toFixed(3)} kg · score {solution.practicalScore.toFixed(1)}</p>
     <p className="text-xs text-muted-foreground">{products.map(p => `${p.reference}: ${solution.counts[p.productId] ?? 0}/${p.quantity} gevraagd`).join(" · ")} · restplacements: {solution.metadata.restPlacementIds.length}</p>

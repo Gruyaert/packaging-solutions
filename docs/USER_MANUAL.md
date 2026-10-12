@@ -1,6 +1,6 @@
 # Gebruikershandleiding
 
-Versie 0.5. Met account bewaart Supabase eigen masterrecords en resultaten; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
+Versie 0.6. Met account bewaart Supabase eigen masterrecords, resultaten en operationlogs; zonder account is een afzonderlijke tijdelijke testwerkruimte beschikbaar. Rekenen blijft lokaal in de browser. Zoekdekking is heuristisch. Geen productie-/transportcertificaat of CERM-write.
 
 ## Testen zonder account
 Klik op **Testen zonder account** boven het aanmeldformulier, of open `/test`. Ben je al aangemeld, gebruik **Lokaal testen** in de header. De testwerkruimte begint leeg; er zijn geen verzonnen producten, masterrecords of voorbeeldresultaten.
@@ -56,13 +56,29 @@ Bekijk hetzelfde read-only laagaanzicht, placements, binnen/buitenmaat, benuttin
 Open Solution opslaan: geef een naam en kies eventueel een definitie van de passende modus. Opslaan maakt een concept, geen automatisch actieve oplossing. Ga naar Solutions voor:
 - **Openen** en metadata (naam/notities) wijzigen.
 - **Dupliceren**: nieuwe snapshot met afkomstlink, origineel behouden.
-- **Bewerken / herberekenen als variant**: producten/doos/speling terug naar de passende werkbank; na berekening nieuw resultaat opslaan. Geen vrije placement-drag-editor.
+- **Dupliceren en placements bewerken**: opent de Packing Solution Editor op een onopgeslagen duplicaat; zie hieronder.
+- **Herberekenen als variant**: producten/doos/speling terug naar de passende werkbank; na berekening nieuw resultaat opslaan.
 - **Valideren**: schema en fysieke geometrie opnieuw controleren; scores worden afgeleid, niet blind vertrouwd.
 - **Vergelijken**: twee snapshots selecteren voor doos-, count-, benutting-, gewicht- en spelingoverzicht.
-- **Als actief instellen**: atomisch de actieve verwijzing binnen dezelfde definitie vervangen.
+- **Maak actief**: bevestiging met definitie, oude/nieuwe current en waarschuwingen; daarna atomisch pointer/status wijzigen en MAKE_CURRENT loggen.
 - **Archiveren** of als concept herstellen. De huidige definitie-solution kan pas worden gearchiveerd nadat je een andere hebt geactiveerd.
 
 Physical snapshot, mode, definitie en variantafkomst zijn immutable. Een variant mag niet tussen STOCK/PERSO of definities wisselen. De afzonderlijke database-ID is niet hetzelfde als de lokale engine solutionId.
+
+## Packing Solution Editor — eerste versie
+1. Open een calculated of saved solution in **Solutions** en kies **Dupliceren en placements bewerken**. Het origineel wordt nooit het editdoel; producten, doos, speling en originele geplaatste aantallen blijven behouden.
+2. Selecteer een placement via het bovenaanzicht, Enter/Spatie, of de placementlijst; kies een laag om die te zien. Donker = selectie; rode rand/REST = mogelijke afwijking van dominante rij/kolom/laag/oriëntatie of los groepje. Dit is heuristische diagnostiek, geen automatisch afkeurcriterium.
+3. Voer X/Y/Z mm in en kies **Verplaatsing previewen**, of een toegestane rotatie en **Rotatie previewen**. Rotatie gebruikt de oorspronkelijke nominale maten. Negatieve/buitenliggende posities en onvoldoende support worden rood, niet stil gecorrigeerd.
+4. Kies een ander placement als rij-/kolomdoel. **Snap naar rij** neemt Y/Z over, **Snap naar kolom** X/Z. **Sluit rest aan bij rij** stelt de dichtste passende linker-/rechterrand van die rij voor. Geen overgebleven ruimte? De preview kan rood zijn; maten worden niet verkleind.
+5. Preview toont het laagaanzicht, delta in mm, overlapdiagnostiek en volledige ValidationJSON. **Voorstel bevestigen op duplicaat** past de wijziging toe; Annuleren behoudt de huidige draft. Een ongeldige draft mag worden onderzocht, maar niet opgeslagen of actief gemaakt.
+6. Zet optioneel Grid aan en wijzig de stap. **Grid-snap XY** is een expliciete wijziging met preview; gridweergave op zich wijzigt geen placements. **Undo/Redo** herstellen fysieke placements, maar verwijderen hun auditgeschiedenis niet.
+7. Controleer **Palletinstellingen**. Voor calculated bronnen begint dit met de bestaande europalletdefaults; een eerder edited snapshot behoudt zijn instellingen. Footprint bevat karton en overhang; beide doosoriëntaties worden gecontroleerd. Vergelijking toont actief (of bron) vs edited: benutting, luchtvolume, lagen, productgewicht, validatie, praktische score en echte palletpatronen op basis van doosgeometrie.
+8. **Valideren** controleert geometrie, bounds/speling/hoogte, rotaties, countsbehoud, maxima, laagindex, overlap, gravity en palletfootprint. Groen kan opgeslagen worden; rood blokkeert Save. Een open preview moet eerst bevestigd of geannuleerd worden.
+9. Geef de edited solution een naam en **Als nieuwe edited solution opslaan**. Dit bewaart een nieuw concept met based_on-bron, snapshot en elke bevestigde edit/undo/redo/validatie. Naam/palletcontext worden bij Save gelogd. Maak actief is daarna optioneel en vraagt een aparte bevestiging.
+
+**Eerste-versiegrens compressie:** nominale maten blijven altijd behouden. allowCompression en compressibilityX/Y/Z zijn alleen expliciete overlapdiagnostiek; rotatie remapt nominale assen naar plaatsingsassen. Overlap blijft rood, ook als de getoonde tolerantie groter is. Geel/oranje materiaalacceptatie en een rode override zijn nog niet beschikbaar; er worden geen materiaaldrempels verzonnen.
+
+Draft en draftlog blijven alleen in geheugen tot Save; tabwissel/sluiten/herladen kan ze wissen. De editor vraagt bevestiging bij sluiten/ander solution openen en waarschuwt bij browserverlaten. Opgeslagen cloudlogs zijn privé/append-only; in testmodus blijft ook opgeslagen data tijdelijk. **Operationlog** toont actor/tijd/type/parameters/before/after. Solution-JSON bewaart de initiële editoraudit; de volledige werkruimte-export bewaart ook latere MAKE_CURRENT- en metadata-events. Intelligente verdeling/spiegelen/nieuwe rijen/lagen en restdoos-editor zijn nog niet beschikbaar.
 
 ## Palletisatie
 Gebruik Palletiseren bij een resultaat of kies een actieve omdoos/database-solution in de filterbare tabel. JSON- en handmatige buitenmaatbronnen blijven beschikbaar. Binnenmaat + 2×karton wordt precies eenmaal naar buitenmaat omgezet; bij handmatige buitenmaten wordt geen karton toegevoegd.
@@ -74,4 +90,4 @@ Rapporten / Exports biedt opgeslagen solution HTML/JSON, pallet-JSON en een voll
 
 Debug bevat de bestaande lokale broninspectie met sheets/hidden-state/celtypen/formules/cache/SHA-256. Er worden geen formules uitgevoerd. XLSX tot 5 MB, 20.000 rijen/256 kolommen per blad en 200.000 cellen; limieten gelden na parsing en voorkomen niet iedere ZIP-bomb. Originele bestanden worden niet opgeslagen of gepubliceerd; alleen expliciet bevestigde importrecords en historiek gaan naar Supabase.
 
-Nog niet beschikbaar: automatische override-resolutie, vrije placement-editor, compressibility, 3D, gedeelde teams en CERM-integratie. Zie [contract](ALGORITHM_CONTRACT.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).
+Nog niet beschikbaar: automatische override-resolutie, intelligente patroonacties/restdoos-editor, compressieacceptatie/overrides, 3D, gedeelde teams en CERM-integratie. Zie [contract](ALGORITHM_CONTRACT.md), [UI](UI_CONTRACT.md), [tests](TEST_PLAN.md) en [index](README.md).

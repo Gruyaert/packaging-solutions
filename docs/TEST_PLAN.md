@@ -1,6 +1,21 @@
 # Testplan
 
-Versie 0.5. B4-packingfeedback is bron van de golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases en lokale testmodus. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+Versie 0.6. B4-packingfeedback is bron van de golden verwachtingen, niet een fictieve Zite-export. **Bevestigd**: zeven feedbackcases, lokale testmodus en eerste editorflow. **Voorlopig voorstel**: support/ranking/restheuristieken. **Open**: productievoorbeelden en daadwerkelijke uitvoerstatus.
+
+## Editor 0.6 — geschreven tests en open acceptatie
+[editor.test.ts](../src/domain/packing/editor.test.ts) bevat tien regressies: immutable duplicatie/move, nominale toegestane rotation/forbidden-input, join-to-row preview zonder mutation, column snap/overlap, undo/redo-log en nieuwe branch, remapping van compressie-assen met blijvend rood, counts/gravity/bounds/top/kaarton-footprint, forged-green rejection, save-new/lineage/origineelbehoud/current-pointer/metadata logging en atomic invalid-save/operationlimiet. Tests geschreven, **niet uitgevoerd**.
+
+Uitgevoerd: operation-table grants/RLS via catalogus (anon SELECT=false, authenticated SELECT=true en write/delete=false, service-role toegang=true); bestaande immutable/context/modeguards en nieuwe audit/activationguards via catalogus gecontroleerd. Geen fixtures in productie geschreven. Niet uitgevoerd: typecheck/build/Vitest/lint/browser/a11y/twee-account/transaction rollback. Geel/oranje tolerantieacceptatie/override en intelligente patroonacties niet geïmplementeerd en dus niet als getest presenteren.
+
+Browser/DB-acceptatie nog uit te voeren:
+- Calculated → duplicate → select → move/rotation/snap/join preview → bevestigen → undo/redo → validate → save edited → reopen: origineel/products/doos/speling/counts/mode/context blijven identiek; edited krijgt nieuwe ID en based_on.
+- Preview annuleren verandert niets; rood toepassen in draft mag, maar rood Save/Maak actief wordt geblokkeerd. Nominale maten blijven ook bij overlap/as-tolerantie ongewijzigd.
+- Dominante rij/kolom/oriëntatie/laag en kleine groep: badge/highlight diagnostisch; aangesloten rest vermindert markering/handlingpenalty waar toepasselijk.
+- Grid/view/laagselectie verandert geen fysieke data zonder expliciete bevestigde operatie; toetsenbordselectie bereikbaar; geen horizontale page-scroll op 320/768/1280/1920px.
+- Audit heeft stabiele operation UUID, juiste persisted solution-ID/actor/tijd/type/parameters/before/after/note, inclusief undo/redo; metadata/MAKE_CURRENT append-only. Directe clientlog INSERT/UPDATE/DELETE en andere owner/anon SELECT weigeren.
+- Activeren toont definitie/old/new/warnings, vervangt pointer atomisch, bewaart original/history en logt MAKE_CURRENT. Concurrentie en transaction-rollback van mislukte loginsert nog testen.
+- Invalid snapshot met gefingeerde green flag in app hervalidatie geweigerd; databaseguard controleert stored flag en preserved inputs, niet onafhankelijke volledige fysica.
+- Initiële audit in individuele JSON; later activation/metadata in workspace 0.6-export. Lokale modus geen packaging-API/RPC, geen persistentie/transfer; herladen verliest ook opgeslagen editorrecords.
 
 ## Lokale testmodus 0.5
 [local-packaging-workspace.test.ts](../src/application/local-packaging-workspace.test.ts) bevat zeven uitvoerbare regressies: lege/gescheiden nieuwe instances, carton CRUD/duplicate keys, volledig gevalideerde import/upsert/history zonder deletes, shape-masterreferentie, cloned immutable snapshots/lineage/modus/context, actief-pointer/archive en immutable echt palletresultaat. Vitest-config bevat nu application-tests en source-alias. Tests zijn geschreven, niet uitgevoerd.
