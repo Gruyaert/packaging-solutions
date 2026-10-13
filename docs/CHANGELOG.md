@@ -1,5 +1,17 @@
 # Changelog
 
+## Taakgerichte werkruimte en operator-infokaart (aanvulling op 0.7)
+
+Brede invoer/resultaatgrid, oplossingenkaarten naast viewer, compacte mobiele select en gekozen resultaat vóór invoer. PackingResults volledig aangesloten; oude SaveSolution/SolutionDetails/export-verwijzingen uit PackingWorkbench verwijderd zodat de gemelde SaveSolution-is-not-defined-refactorfout opgelost is. Kerngegevens/schema voorop, technische tabellen/JSON/diagnostiek en uitgebreide vieweropties standaard gesloten.
+
+Camera standaard upright: rondom draaien en verticaal kantelen met begrensde pitch zonder omrollen. Z-only en free optioneel. Mousewheel/tweepointerpinch/+/−/keyboard/Home; aanzichtknoppen met aria-state, laagkeuze, contour/dekking en camerabehoud. Normalisatie en cameraexport, nieuwe oplossing toont alle stappen/lagen. Geen fysieke enginewijziging.
+
+Blauwe offline operator-infokaart: maten, werkelijke inhoud/aantallen, eerste-laagschema, laagopbouw en viewer; technische bijlagen onderaan dicht, volledige JSON behouden. Printweergave met statische eerste laag. Geen gecertificeerde vul-/montage-/transportinstructie of materiaalmodel.
+
+Excel: extra expliciete inside/axis/doosnummeraliases; sheet/headerwijziging geeft een nieuw veilig voorstel met bevestigingreset, samples bij manuele keuze, expliciet laatste gegevensrij en zichtbare overslaaninformatie voor exact herhaalde verplichte headers. Onbekende/formule/error/subtotaalrijen niet stil verwijderd. Eenheidsbevestiging, preview en atomische sync behouden; geen geraden cm/buitenmaatconversie.
+
+Verificatie: bronreview en regressies bijgewerkt/geschreven (vier geserialiseerde runtime-stubtests, aangepaste viewer/reporttests en vier import-header-regressies). Typecheck/build/Vitest/lint/browser/WebGL/echte XLSX/file:///print/deviceacceptatie **niet uitgevoerd**, geen uitvoer-/browsertool beschikbaar. Cross-devicebediening geïmplementeerd maar niet als gevalideerd geclaimd. Geen database/dependencywijzigingen of serverrestart.
+
 ## UX/UI en palletcamera (aanvulling op 0.7)
 
 Wit-blauw thema met donkere tekst, pictogramnavigatie en stapsgewijze invoer. Herbruikbare X/Y/Z-maatillustraties voor producten, omdozen en pallets; expliciete mm/gewicht-per-stuk/aantal-per-doos/binnen-buitenmaat/hoogtelimietuitleg. Productrotaties en stapellimieten uitklapbaar, grotere invoervelden en gelabelde keuzes. Offline rapport volgt hetzelfde kleurthema.

@@ -7,10 +7,10 @@ export const IMPORT_FIELDS = {
 };
 export const IMPORT_REQUIRED = { cartons: ['reference', 'length', 'width', 'height'], shapes: ['shape_id', 'variant_id', 'format_a', 'format_b', 'format_h'] };
 const aliases: Record<string, string[]> = {
-  reference: ['reference', 'referentie', 'ref', 'doosreferentie', 'box reference', 'carton reference', 'dooscode', 'boxcode', 'carton code', 'artikelnummer', 'article number'],
-  length: ['length', 'lengte', 'l', 'binnen l', 'binnenlengte', 'interne lengte', 'internal length', 'inside length', 'inner length'],
-  width: ['width', 'breedte', 'b', 'w', 'binnen b', 'binnenbreedte', 'interne breedte', 'internal width', 'inside width', 'inner width'],
-  height: ['height', 'hoogte', 'h', 'binnen h', 'binnenhoogte', 'interne hoogte', 'internal height', 'inside height', 'inner height'],
+  reference: ['reference', 'referentie', 'ref', 'doosreferentie', 'box reference', 'carton reference', 'dooscode', 'boxcode', 'carton code', 'artikelnummer', 'article number', 'doosnummer', 'doos nr', 'carton id'],
+  length: ['length', 'lengte', 'l', 'binnen l', 'binnenlengte', 'interne lengte', 'internal length', 'inside length', 'inner length', 'lengte binnen', 'l binnen', 'lengte x', 'length x'],
+  width: ['width', 'breedte', 'b', 'w', 'binnen b', 'binnenbreedte', 'interne breedte', 'internal width', 'inside width', 'inner width', 'breedte binnen', 'b binnen', 'breedte y', 'width y'],
+  height: ['height', 'hoogte', 'h', 'binnen h', 'binnenhoogte', 'interne hoogte', 'internal height', 'inside height', 'inner height', 'hoogte binnen', 'h binnen', 'hoogte z', 'height z'],
   cardboard: ['cardboard', 'karton', 'kartondikte', 'cardboard thickness', 'board thickness', 'wanddikte', 'wall thickness'],
   shape_id: ['shape_id', 'shapeid', 'shape id', 'shape code'],
   variant_id: ['variant_id', 'shapevariantid', 'shape variant id', 'variant', 'variant id', 'variantid', 'variant code'],

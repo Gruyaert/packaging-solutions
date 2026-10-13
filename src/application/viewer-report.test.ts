@@ -14,16 +14,19 @@ const placements: Placement[] = [
 const product: Product = { productId: 'p', reference: 'Product', length: 10, width: 10, height: 10, quantity: 3, weightKg: 0.1, rotations: ['L-B-H'], maxInLength: 10, maxInWidth: 10, maxLayers: 10, allowCompression: true, compressibilityX: 2 };
 const data: ViewerData = { title: 'Eigen referentie', kind: 'packaging', placements, products: [product], bounds: { length: 30, width: 20, height: 30 }, validation: { status: 'valid', warnings: ['Nominale maten behouden.'] } };
 describe('Shared placement viewer and offline reports', () => {
-  it('defaults to Z-only rotation and preserves only supported rotation choices in exports', () => {
-    expect(createViewerModel(placements).state.rotation).toBe('z');
-    expect(createViewerModel(placements, { rotation: 'invalid' }).state.rotation).toBe('z');
-    expect(createViewerModel(placements, { rotation: 'free' }).state.rotation).toBe('free');
-    for (const rotation of ['z', 'free']) {
-      const report = buildInteractiveHtml({ ...data, settings: { rotation } }, 'window.Plotly = {};');
+  it('defaults to upright rotation and exports normalized camera settings without changing placements', () => {
+    expect(createViewerModel(placements).state.rotation).toBe('upright');
+    expect(createViewerModel(placements, { rotation: 'invalid' }).state.rotation).toBe('upright');
+    const camera = { eye: { x: 1, y: 2, z: 1 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 } };
+    expect(createViewerModel(placements, { camera: { eye: { x: 0, y: 0, z: 0 } } }).state.camera).toBeUndefined();
+    expect(createViewerModel(placements, { camera, keepCamera: false }).state.camera).toBeUndefined();
+    for (const rotation of ['upright', 'z', 'free']) {
+      const report = buildInteractiveHtml({ ...data, settings: { rotation, camera } }, 'window.Plotly = {};');
       const json = report.match(/<script type="application\/json" id="packaging-solution-data">([\s\S]*?)<\/script>/)![1];
       expect(JSON.parse(json).settings.rotation).toBe(rotation);
+      expect(JSON.parse(json).settings.camera).toEqual(camera);
       expect(JSON.parse(json).placements).toEqual(placements);
-      expect(report).toContain('Meer weergaveopties → Draaien');
+      expect(report).toContain('Operator-infokaart');
       expect(report).not.toContain('#21473b');
     }
   });
@@ -66,7 +69,7 @@ describe('Shared placement viewer and offline reports', () => {
     expect(encoded).not.toContain('</script>'); expect(encoded).not.toContain('<');
     expect(JSON.parse(encoded).reference).toBe(malicious);
   });
-  it('embeds Plotly, all ten sections, complete source and no external runtime', () => {
+  it('embeds Plotly, an operator card with collapsed technical appendices, complete source and no external runtime', () => {
     const report = buildInteractiveHtml({ ...data, title: '</script><img src=x>', fullSolution: { editor: { sourceSolutionId: 'original' } }, settings: { productGap: 35 } }, 'window.Plotly = {};');
     expect(report).toContain('window.Plotly = {};'); expect(report).toContain('connect-src \'none\'');
     expect(report).not.toMatch(/<script[^>]+src=/i); expect(report).not.toContain('cdn.plot.ly');
@@ -75,7 +78,11 @@ describe('Shared placement viewer and offline reports', () => {
     expect(parsed.placements).toEqual(placements); expect(parsed.settings.productGap).toBe(35);
     expect(parsed.products[0].compressibilityX).toBe(2); expect(parsed.validation.status).toBe('valid');
     expect(parsed.fullSolution.editor.sourceSolutionId).toBe('original');
-    expect(report).toContain('10. Technische data'); expect(report).toContain('6. Validatie / compressibility');
+    expect(report).toContain('Technische data · Full solution JSON'); expect(report).toContain('Validatie / compressibility');
+    expect(report).toContain('<details class="appendix technical"><summary>Technische bijlagen');
+    expect(report).not.toMatch(/<details[^>]*\bopen(?:\s|=|>)/);
+    expect(report.indexOf('Wat gaat in de doos?')).toBeLessThan(report.indexOf('Technische bijlagen'));
+    expect(report).toContain('Bovenaanzicht eerste laag'); expect(report).toContain('@media print');
     expect(report).not.toContain('<img src=x>');
     const scripts = [...report.matchAll(/<script>([\s\S]*?)<\/script>/g)];
     for (const script of scripts) expect(() => new Function(script[1])).not.toThrow();
