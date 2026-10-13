@@ -13,6 +13,7 @@ import { usePackagingData } from "./PackagingDataProvider";
 import { RecordTable } from "./RecordTable";
 import { DimensionGuide } from "./DimensionGuide";
 import { PackingResults } from "./PackingResults";
+import "./workspace-layout.css";
 
 export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }): void }) {
   const { records, storage } = usePackagingData();
