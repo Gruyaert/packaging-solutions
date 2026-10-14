@@ -36,7 +36,8 @@ export function MasterImport({ kind }: { kind: MasterKind }) {
         const raw = cell?.type === "formule" ? cell.cachedValue : cell?.value;
         if (numeric.has(key)) {
           const value = raw === null || raw === undefined || raw === "" ? (key === "cardboard" && !mapping[key] ? 0 : NaN) : typeof raw === "number" ? raw : Number(String(raw).trim().replace(",", "."));
-          if (!Number.isFinite(value) || (key === "cardboard" || key === "format_h" ? value < 0 : value <= 0)) errors.push(`Rij ${row.number}: ${labels[key]} moet ${key === "cardboard" || key === "format_h" ? "niet-negatief" : "positief"} numeriek zijn.`);
+          const nonnegativeField = key === "cardboard" || key === "format_a" || key === "format_b" || key === "format_h";
+          if (!Number.isFinite(value) || (nonnegativeField ? value < 0 : value <= 0)) errors.push(`Rij ${row.number}: ${labels[key]} moet ${nonnegativeField ? "niet-negatief" : "positief"} numeriek zijn.`);
           item[key] = value;
         } else if (key === "active" || key === "blocked") {
           if (!mapping[key]) item[key] = key === "active";

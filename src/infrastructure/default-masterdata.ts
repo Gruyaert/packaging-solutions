@@ -132,7 +132,8 @@ function parseRows(kind: MasterKind, sheet: InspectedSheet, headerRow: number, m
       const numericRaw = combinedIndex >= 0 && combinedFormats ? combinedFormats[combinedIndex] : raw;
       if (numeric.has(field)) {
         const value = numericRaw === null || numericRaw === undefined || numericRaw === "" ? (field === "cardboard" ? 0 : NaN) : numericValue(numericRaw);
-        if (!Number.isFinite(value) || (field === "cardboard" || field === "format_h" ? value < 0 : value <= 0)) throw new Error(`${sources[kind].filename}: ongeldige ${field} op rij ${row.number}.`);
+        const nonnegativeField = field === "cardboard" || field === "format_a" || field === "format_b" || field === "format_h";
+        if (!Number.isFinite(value) || (nonnegativeField ? value < 0 : value <= 0)) throw new Error(`${sources[kind].filename}: ongeldige ${field} op rij ${row.number}.`);
         item[field] = value;
       } else if (field === "active" || field === "blocked") {
         if (!mapping[field]) item[field] = field === "active";
