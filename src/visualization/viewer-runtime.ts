@@ -30,7 +30,7 @@ export function mountViewer(root: HTMLElement, data: ViewerData, Plotly: any, in
   const palette = paletteOverride ?? fallbackPalette();
   const model = factory(data.placements, initial), { state, ordered, levels } = model;
   const ids = [...new Set(ordered.map(placement => placement.productId))];
-  const escape = (value:string) => value.replace(/[&<>\"']/g, character => ({'&':'&','<':'<','>':'>','\"':'"','\'':''''}[character]!));
+  const escape = (value:string) => value.replace(/[&<>\"']/g, character => ({'&':'&','<':'<','>':'>','\"':'"',"'":'''}[character]!));
 
   let disposed=false,rendering=false,pending=false,timer:ReturnType<typeof setInterval>|undefined,delay:ReturnType<typeof setTimeout>|undefined,backgroundDelay:ReturnType<typeof setTimeout>|undefined;
   root.innerHTML='<div class="pv-toolbar"><div class="pv-controls"><div class="pv-camera"></div></div><div class="pv-camera"></div><details class="pv-options pv-advanced-options"><summary>More display options <span>color · light · labels · spacing</span></summary><div class="pv-advanced"></div></details><p class="pv-status" role="status"></p></div><div class="pv-plot"></div><p class="pv-help"></p><details class="pv-options pv-checks"><summary>Control and technical remarks</summary><p class="pv-validation"></p></details>';\n  const controls=root.querySelector('.pv-controls')!,cameraControls=root.querySelector('.pv-camera')!,advanced=root.querySelector('.pv-advanced')!,timeline=root.querySelector('.pv-timeline')!,status=root.querySelector('.pv-status')!,help=root.querySelector('.pv-help')!,plot=root.querySelector('.pv-plot') as HTMLElement;
