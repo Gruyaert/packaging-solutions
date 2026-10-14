@@ -2,24 +2,27 @@
 .packing-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.25rem; }
 .packing-input-panel, .packing-result-panel, .packing-results { min-width: 0; max-width: 100%; }
 .packing-results { container: packing-results / inline-size; }
-.packing-result-panel.has-results { order: -1; }
 .packing-result-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1rem; }
 .packing-result-cards { display: none; }
 .packing-result-choice { display: block; }
-.packing-auto-fields, .product-field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: .75rem; }
+.packing-auto-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: .75rem; }
+.product-inputs { container: product-inputs / inline-size; }
+.product-dimension-grid, .product-quantity-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
 .dimension-guide { container: dimension-guide / inline-size; max-width: 100%; overflow: hidden; }
 .dimension-guide-content { display: flex; flex-direction: column; gap: .75rem; }
+@container product-inputs (min-width: 420px) {
+  .product-dimension-grid, .product-quantity-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @container dimension-guide (min-width: 500px) {
   .dimension-guide-content { flex-direction: row; align-items: center; }
 }
-@container packing-workbench (min-width: 860px) {
-  .packing-layout { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
-  .packing-input-panel { max-height: calc(100vh - 220px); max-height: calc(100dvh - 220px); overflow-y: auto; padding-right: .5rem; }
-  .packing-result-panel.has-results { order: 0; }
+@container packing-workbench (min-width: 900px) {
+  .packing-layout { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); }
+  .packing-input-panel { overflow: visible; }
 }
 @container packing-results (min-width: 700px) {
-  .packing-result-grid { grid-template-columns: minmax(180px, .35fr) minmax(0, 1fr); }
-  .packing-result-cards { display: block; max-height: calc(100vh - 260px); max-height: calc(100dvh - 260px); overflow-y: auto; }
+  .packing-result-grid { grid-template-columns: minmax(190px, .4fr) minmax(0, .6fr); }
+  .packing-result-cards { display: block; max-height: calc(100vh - 300px); max-height: calc(100dvh - 300px); overflow-y: auto; }
   .packing-result-choice { display: none; }
   .packing-result-detail { position: sticky; top: .75rem; }
 }

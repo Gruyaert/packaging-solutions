@@ -62,12 +62,14 @@ export function searchPackaging(products: Product[], boxes: Box[], spacing: Spac
   if (!boxes.length) throw new Error("Voer minstens één doos met interne maten in.");
   if (options.maxWeightKg !== undefined && (!Number.isFinite(options.maxWeightKg) || options.maxWeightKg < 0)) throw new Error("Ongeldig maximumgewicht.");
   if (options.maxTotalLayers !== undefined && (!Number.isSafeInteger(options.maxTotalLayers) || options.maxTotalLayers < 1)) throw new Error("Maximaal totaal aantal lagen moet positief en geheel zijn.");
-  const maxAttempts = Math.max(1, Math.min(96, options.maxAttempts ?? 48));
+  const maxAttempts = Math.max(boxes.length, Math.min(96, options.maxAttempts ?? 48));
   const solutions: SearchResult["solutions"] = [];
   const signatures = new Set<string>();
   let attempts = 0, truncated = false;
   const orders = [products, [...products].sort((a, b) => volume(b) - volume(a)), [...products].reverse()];
-  outer: for (const order of orders) for (const rotations of rotationVariants(order)) for (const fill of strategy === "desired" ? [false, true] : [true]) for (const box of boxes) {
+  const variants = orders.flatMap(order => rotationVariants(order).map(rotations => ({ order, rotations, fill: strategy === "fill" })));
+  const plan = [...boxes.map(box => ({ ...variants[0], box })), ...variants.slice(1).flatMap(variant => boxes.map(box => ({ ...variant, box })))]
+  outer: for (const { order, rotations, fill, box } of plan) {
     options.signal?.throwIfAborted();
     if (attempts >= maxAttempts) { truncated = true; break outer; }
     const packed = packAttempt(order, box, spacing, rotations, fill, options);
