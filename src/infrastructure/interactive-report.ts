@@ -1,5 +1,6 @@
 import { mountViewer, VIEWER_CSS, type ViewerData } from '@/visualization/viewer-runtime';
 import { createViewerModel } from '@/visualization/viewer-model';
+import { createViewerPalette } from '@/visualization/viewer-palette';
 import { loadPlotlySource } from '@/visualization/plotly';
 import { downloadFile } from './report-export';
 import { operatorCardBody, OPERATOR_CARD_CSS } from './operator-card';
@@ -32,7 +33,7 @@ export function buildInteractiveHtml(input: ViewerData, plotlySource: string) {
   const section = (title: string, value: unknown) => `<details class="appendix"><summary>${e(title)}</summary><div><pre>${e(JSON.stringify(value ?? null,null,2))}</pre></div></details>`;
   const table = (headers:string[],rows:unknown[][]) => `<div class="table-scroll"><table><thead><tr>${headers.map(h=>`<th>${e(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,600).map(row=>`<tr>${row.map(v=>`<td>${e(v ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${rows.length > 600 ? `<p>Tabel toont de eerste 600/${rows.length} rijen. Alle gegevens staan in packaging-solution-data / Technische data.</p>` : ''}`;
   const source = plotlySource.replace(/<\/script/gi, '<\\/script');
-  const runtime = mountViewer.toString().replace(/<\/script/gi,'<\\/script'), model = createViewerModel.toString();
+  const runtime = mountViewer.toString().replace(/<\/script/gi,'<\\/script'), model = createViewerModel.toString(), palette = createViewerPalette.toString();
   return `<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; worker-src blob:"><title>${e(data.title)}</title><style>${OPERATOR_CARD_CSS}${VIEWER_CSS}</style></head><body><main>
 ${operatorCardBody(data,e,table)}
 <details class="appendix technical"><summary>Technische bijlagen · context, validatie en volledige brondata</summary><div>
@@ -44,8 +45,8 @@ ${section('Productinvoer',data.products)}${section('Palletisatie',data.pallet)}$
 </div></details><footer>Offline infokaart · geen internet/CDN nodig · geometrische kijkhulp, geen materiaal- of transportcertificaat. WebGL nodig voor 3D; 2D-aanzichten en het eerste-laagschema blijven beschikbaar.</footer></main>
 <script type="application/json" id="packaging-solution-data">${scriptJson(data)}</script><script>${source}</script><script>
 const reportData=JSON.parse(document.getElementById('packaging-solution-data').textContent);document.getElementById('technical-json').textContent=JSON.stringify(reportData,null,2);document.getElementById('print-card').onclick=()=>window.print();
-const modelFactory=(${model});const startViewer=(${runtime});let viewerRuntime;const host=document.getElementById('viewer');
-function start(){if(viewerRuntime)return;try{viewerRuntime=startViewer(host,reportData,window.Plotly,reportData.settings||{},undefined,modelFactory);}catch(error){host.textContent='Viewer kon niet starten: '+String(error);}}
+const modelFactory=(${model});const paletteFactory=(${palette});const startViewer=(${runtime});let viewerRuntime;const host=document.getElementById('viewer');
+function start(){if(viewerRuntime)return;try{viewerRuntime=startViewer(host,reportData,window.Plotly,reportData.settings||{},undefined,modelFactory,paletteFactory());}catch(error){host.textContent='Viewer kon niet starten: '+String(error);}}
 if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){start();observer.disconnect();}},{rootMargin:'100px'});observer.observe(host);}else start();
 </script></body></html>`;
 }

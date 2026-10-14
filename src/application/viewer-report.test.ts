@@ -79,6 +79,7 @@ describe('Shared placement viewer and offline reports', () => {
     expect(parsed.products[0].compressibilityX).toBe(2); expect(parsed.validation.status).toBe('valid');
     expect(parsed.fullSolution.editor.sourceSolutionId).toBe('original');
     expect(report).toContain('Technische data · Full solution JSON'); expect(report).toContain('Validatie / compressibility');
+    expect(report).toContain('const paletteFactory='); expect(report).toContain('const bases = ["#2563eb"');
     expect(report).toContain('<details class="appendix technical"><summary>Technische bijlagen');
     expect(report).not.toMatch(/<details[^>]*\bopen(?:\s|=|>)/);
     expect(report.indexOf('Wat gaat in de doos?')).toBeLessThan(report.indexOf('Technische bijlagen'));

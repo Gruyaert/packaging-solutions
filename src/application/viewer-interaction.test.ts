@@ -35,9 +35,12 @@ function setup(data: ViewerData, initial: Record<string, unknown> = {}) {
   vi.stubGlobal('requestAnimationFrame', (callback: () => void) => setTimeout(callback, 16));
   vi.stubGlobal('cancelAnimationFrame', clearTimeout);
   const plot = nodes.get('.pv-plot')!;
+  const plotlyEvents = new Map<string, (event: any) => void>();
   const Plotly = {
     react: vi.fn(async (_plot: unknown, _traces: any[], layout: any) => { plot.layout = layout; }),
     relayout: vi.fn(async (_plot: unknown, change: Record<string, any>) => { if (change['scene.camera']) plot.layout.scene.camera = change['scene.camera']; }),
+    on: vi.fn((_plot: unknown, name: string, handler: (event: any) => void) => plotlyEvents.set(name, handler)),
+    removeListener: vi.fn((_plot: unknown, name: string) => plotlyEvents.delete(name)),
     purge: vi.fn(), Plots: { resize: vi.fn() },
   };
   const serialized = new Function(`return (${mountViewer.toString()});`)() as typeof mountViewer;
@@ -46,7 +49,8 @@ function setup(data: ViewerData, initial: Record<string, unknown> = {}) {
   const emit = (name: string, value: any) => plot.listeners.get(name)!(value);
   const rotation = nodes.get('.pv-advanced')!.children.find(node => node.textContent === 'Draaien ')!.children[0];
   const setRotation = async (value: string) => { rotation.value = value; rotation.onchange!(); await vi.advanceTimersByTimeAsync(100); };
-  return { nodes, plot, Plotly, runtime, event, emit, setRotation };
+  const emitPlotly = (name: string, value: any) => plotlyEvents.get(name)?.(value);
+  return { nodes, plot, Plotly, runtime, event, emit, emitPlotly, setRotation };
 }
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 const data = () => palletViewerData('Pallet', palletize({ kind: 'database', box: { boxId: 'box', reference: 'Doos', length: 400, width: 300, height: 200, cardboard: 3 } }, DEFAULT_PALLET)[0], DEFAULT_PALLET);
@@ -118,5 +122,21 @@ describe('Serialized viewer camera and pallet logic', () => {
     (keep as any).checked = false; keep.onchange!();
     expect(runtime.settings().camera).toBeUndefined();
     runtime.destroy();
+  });
+  it('uses stable per-box tint metadata, rich hover data and cleans up Plotly selection handlers', async () => {
+    const { Plotly, plot, runtime, emitPlotly } = setup(data());
+    await vi.advanceTimersByTimeAsync(100);
+    const traces = Plotly.react.mock.calls[0][1];
+    const productTrace = traces.find(trace => trace.type === 'mesh3d' && trace.vertexcolor);
+    const pointTrace = traces.find(trace => trace.customdata);
+    expect(productTrace.vertexcolor.length).toBe(productTrace.x.length);
+    expect(new Set(productTrace.vertexcolor).size).toBeGreaterThan(1);
+    expect(pointTrace.customdata[0][0]).toBeTruthy();
+    emitPlotly('plotly_click', { points: [{ customdata: pointTrace.customdata[0] }] });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(runtime.settings().selectedPlacementId).toBe(pointTrace.customdata[0][0]);
+    expect(plot.layout.scene.camera.projection.type).toBe('perspective');
+    runtime.destroy();
+    expect(Plotly.removeListener).toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { mountViewer, VIEWER_CSS, type ViewerData } from '@/visualization/viewer
 import { loadPlotly } from '@/visualization/plotly';
 import { recordMetric } from '@/application/performance';
 import { exportInteractiveReport } from '@/infrastructure/interactive-report';
+import { createViewerPalette } from '@/visualization/viewer-palette';
 export function PackagingViewer({ data }: { data: ViewerData }) {
   const host = useRef<HTMLDivElement>(null), runtime = useRef<ReturnType<typeof mountViewer> | undefined>(undefined), visualSettings = useRef<Record<string, unknown> | undefined>(data.settings);
   const [visible, setVisible] = useState(false), [error, setError] = useState(''), [exporting, setExporting] = useState(false);
@@ -14,7 +15,7 @@ export function PackagingViewer({ data }: { data: ViewerData }) {
     setError('');
     void loadPlotly().then(plotly => { if (!canceled && host.current) {
       const settings = { ...visualSettings.current, step: data.placements.length, layer: 'all' };
-      runtime.current = mountViewer(host.current, data, plotly, settings, recordMetric);
+      runtime.current = mountViewer(host.current, data, plotly, settings, recordMetric, undefined, createViewerPalette());
     } }).catch(e => { if (!canceled) setError(String(e)); });
     return () => { canceled = true; if (runtime.current) { visualSettings.current = runtime.current.settings(); runtime.current.destroy(); runtime.current = undefined; } };
   }, [visible, data]);
