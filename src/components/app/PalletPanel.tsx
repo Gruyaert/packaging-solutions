@@ -23,12 +23,12 @@ export function PalletPanel({ solution, products = [], context }: { solution?: S
   const [settings, setSettings] = useState<PalletSettings>({ ...DEFAULT_PALLET });
   const [sorting, setSorting] = useState<Sorting>("fill"), [results, setResults] = useState<PalletResult[]>([]), [selectedPattern, setSelectedPattern] = useState(""), [error, setError] = useState("");
   const [calculatedSource, setCalculatedSource] = useState<PalletSource>(), [name, setName] = useState("");
-  const [calculating, setCalculating] = useState(false);
+  const [calculating, setCalculating] = useState(false), [autoRun, setAutoRun] = useState(false);
   const workerRef = useRef<Worker | undefined>(undefined);
   const cache = useRef(createResultCache<PalletResult[]>());
   const cancel = () => { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); };
   useEffect(() => () => { workerRef.current?.terminate(); cache.current.clear(); }, []);
-  useEffect(() => { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); if (solution) { setSource("packaging"); setResults([]); } }, [solution]);
+  useEffect(() => { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); if (solution) { setSource("packaging"); setResults([]); setAutoRun(true); } }, [solution]);
   const effective = effectivePallet(settings);
   const update = (patch: Partial<PalletSettings>) => { setSettings({ ...settings, ...patch }); setResults([]); };
   const run = () => {
@@ -57,6 +57,7 @@ export function PalletPanel({ solution, products = [], context }: { solution?: S
       worker.postMessage(job);
     } catch (failure) { workerRef.current?.terminate(); workerRef.current = undefined; setCalculating(false); setResults([]); setError(failure instanceof Error ? failure.message : "Palletisatie mislukt."); }
   };
+  useEffect(() => { if (autoRun && solution && source === "packaging") { setAutoRun(false); run(); } }, [autoRun, solution, source]);
   const best = results.find(r => r.pattern === selectedPattern) ?? results[0];
   return <section className="min-w-0 space-y-5" aria-label="Palletisatie"><div><h1 className="text-2xl font-semibold">Palletisatie</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Kies een omdoos of verpakkingsoplossing, stel je pallet in en vergelijk de stapelpatronen.</p></div>
     <DimensionGuide kind="pallet" />
