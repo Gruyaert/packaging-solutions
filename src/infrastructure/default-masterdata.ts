@@ -17,7 +17,7 @@ function normalize(value: string) {
 function headerScore(field: string, header: string) {
   const value = normalize(header);
   if (field === "reference") return /reference|referentie|ref|omdoos|doos|box|carton|artikel|code|^id$/.test(value) ? 4 : 0;
-  if (field === "shape_id") return /shape|vorm|^id$/.test(value) ? 4 : 0;
+  if (field === "shape_id") return /shape|vorm|ref|reference|^id$/.test(value) ? 4 : 0;
   if (field === "variant_id") return /variant/.test(value) ? 4 : 0;
   if (field === "length") return /length|lengte|binnenl|internel|^l$|^x$/.test(value) ? 4 : 0;
   if (field === "width") return /width|breedte|binnenb|interneb|^b$|^w$|^y$/.test(value) ? 4 : 0;
