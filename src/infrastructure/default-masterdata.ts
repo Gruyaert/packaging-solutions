@@ -138,5 +138,5 @@ export async function loadAllDefaultMasterRows() {
   return { cartons, shapes };
 }
 
-export const DEFAULT_MASTERDATA_POLICY = "insert-if-missing; key-based upsert for later imports; no deletion";
+export const DEFAULT_MASTERDATA_POLICY = "key-based upsert for defaults and later imports; no deletion";
 export const DEFAULT_MASTERDATA_CONTRACT = "defaults-from-attached-excel-v1";

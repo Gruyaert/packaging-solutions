@@ -48,13 +48,15 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
     void Promise.all(pending.map(async kind => {
       try {
         const defaults = await loadDefaultMasterRows(kind);
-        const existingKeys = kind === "cartons"
-          ? new Set(query.data!.cartons.map(row => row.reference))
-          : new Set(query.data!.shapes.map(row => `${row.shape_id}\u0000${row.variant_id}`));
-        const hasMissingDefaults = defaults.rows.some(row => kind === "cartons"
-          ? !existingKeys.has(String(row.reference))
-          : !existingKeys.has(`${row.shape_id}\u0000${row.variant_id}`));
-        if (!hasMissingDefaults) return;
+        const hasChangedDefaults = defaults.rows.some(row => {
+          if (kind === "cartons") {
+            const existing = query.data!.cartons.find(item => item.reference === row.reference);
+            return !existing || ["description", "material", "length", "width", "height", "cardboard", "active"].some(field => String(existing[field as keyof typeof existing]) !== String(row[field]));
+          }
+          const existing = query.data!.shapes.find(item => item.shape_id === row.shape_id && item.variant_id === row.variant_id);
+          return !existing || ["description", "product_group", "format_a", "format_b", "format_h", "blocked", "active"].some(field => String(existing[field as keyof typeof existing]) !== String(row[field]));
+        });
+        if (!hasChangedDefaults) return;
         const { error } = await supabase.rpc("seed_packaging_defaults", { p_kind: kind, p_filename: defaults.filename, p_checksum: defaults.checksum, p_rows: defaults.rows });
         if (error) throw new Error(error.message);
       } catch (error) {
