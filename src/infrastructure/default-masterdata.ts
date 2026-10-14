@@ -59,6 +59,27 @@ function fallbackMapping(sheet: InspectedSheet, kind: MasterKind, headerRow: num
   return mapping;
 }
 
+function applyCombinedShapeFormatMapping(sheet: InspectedSheet, kind: MasterKind, headerRow: number, mapping: Record<string, number>) {
+  if (kind !== "shapes") return;
+  const header = sheet.rows.find(row => row.number === headerRow);
+  const combined = header?.cells.find(cell => /^(format|formaat)abh(?:mm)?$/.test(normalize(cell.text)));
+  if (combined) {
+    mapping.format_a = combined.column;
+    mapping.format_b = combined.column;
+    mapping.format_h = combined.column;
+  }
+}
+
+function combinedFormatValues(row: InspectedSheet["rows"][number], column: number) {
+  const cell = row.cells.find(candidate => candidate.column === column);
+  if (!cell) return undefined;
+  const values = (cell.text.match(/\d+(?:[.,]\d+)?/g) ?? []).map(value => Number(value.replace(",", ".")));
+  if (values.length === 3 && values.every(Number.isFinite)) return values;
+  const separateValues = [0, 1, 2].map(offset => row.cells.find(candidate => candidate.column === column + offset)?.text.trim() ?? "");
+  if (separateValues.every(value => /^\d+(?:[.,]\d+)?(?:\s*mm)?$/i.test(value))) return separateValues.map(value => Number(value.replace(/mm/i, "").trim().replace(",", ".")));
+  return undefined;
+}
+
 function findDefaultMapping(book: WorkbookInspection, kind: MasterKind) {
   const candidates: { sheetIndex: number; headerRow: number; mapping: Record<string, number>; missing: string[]; score: number }[] = [];
   book.sheets.forEach((sheet, sheetIndex) => {
@@ -67,6 +88,7 @@ function findDefaultMapping(book: WorkbookInspection, kind: MasterKind) {
       const exact = suggestHeaderMapping(sheet, row.number, kind);
       const inferred = inferMapping(sheet, kind, row.number);
       const mapping = { ...inferred, ...exact.mapping };
+      applyCombinedShapeFormatMapping(sheet, kind, row.number, mapping);
       const missing = IMPORT_REQUIRED[kind].filter(field => !mapping[field]);
       const recognizedRequired = IMPORT_REQUIRED[kind].length - missing.length;
       if (recognizedRequired >= 2) candidates.push({ sheetIndex, headerRow: row.number, mapping, missing, score: recognizedRequired * 100 + Object.keys(mapping).length });
@@ -80,6 +102,7 @@ function findDefaultMapping(book: WorkbookInspection, kind: MasterKind) {
   if (!sheet) return undefined;
   const headerRow = [...sheet.rows.filter(row => row.number <= 50)].sort((a, b) => b.cells.length - a.cells.length || a.number - b.number)[0]?.number ?? 1;
   const mapping = { ...fallbackMapping(sheet, kind, headerRow), ...inferMapping(sheet, kind, headerRow) };
+  applyCombinedShapeFormatMapping(sheet, kind, headerRow, mapping);
   return { sheetIndex, headerRow, mapping, missing: IMPORT_REQUIRED[kind].filter(field => !mapping[field]), score: 0 };
 }
 
@@ -91,11 +114,15 @@ function parseRows(kind: MasterKind, sheet: InspectedSheet, headerRow: number, m
     const requiredCells = IMPORT_REQUIRED[kind].map(field => row.cells.find(cell => cell.column === mapping[field]));
     if (requiredCells.every(cell => !cell || !cell.text.trim())) continue;
     const item: Record<string, unknown> = {};
+    const combinedFormatColumn = kind === "shapes" && mapping.format_a === mapping.format_b && mapping.format_b === mapping.format_h ? mapping.format_a : undefined;
+    const combinedFormats = combinedFormatColumn ? combinedFormatValues(row, combinedFormatColumn) : undefined;
     for (const field of IMPORT_FIELDS[kind]) {
       const cell = row.cells.find(candidate => candidate.column === mapping[field]);
       const raw = cell?.type === "formule" ? cell.cachedValue : cell?.value;
+      const combinedIndex = field === "format_a" ? 0 : field === "format_b" ? 1 : field === "format_h" ? 2 : -1;
+      const numericRaw = combinedIndex >= 0 && combinedFormats ? combinedFormats[combinedIndex] : raw;
       if (numeric.has(field)) {
-        const value = raw === null || raw === undefined || raw === "" ? (field === "cardboard" ? 0 : NaN) : typeof raw === "number" ? raw : Number(String(raw).trim().replace(",", "."));
+        const value = numericRaw === null || numericRaw === undefined || numericRaw === "" ? (field === "cardboard" ? 0 : NaN) : typeof numericRaw === "number" ? numericRaw : Number(String(numericRaw).trim().replace(",", "."));
         if (!Number.isFinite(value) || (field === "cardboard" ? value < 0 : value <= 0)) throw new Error(`${sources[kind].filename}: ongeldige ${field} op rij ${row.number}.`);
         item[field] = value;
       } else if (field === "active" || field === "blocked") {
