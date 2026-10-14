@@ -19,7 +19,7 @@ export function packAttempt(products: Product[], box: Box, spacing: Spacing, ori
   const placements: Placement[] = [];
   const counts = Object.fromEntries(products.map(p => [p.productId, 0]));
   const points = [{ x: spacing.length / 2, y: spacing.width / 2, z: 0 }];
-  const limit = Math.max(1, Math.min(300, options.maxPlacements ?? 200));
+  const limit = Math.max(1, Math.min(fill ? 1000 : 300, options.maxPlacements ?? (fill ? 1000 : 200)));
   let checks = 0, truncated = false, weightKg = 0;
   const levels = new Set<number>();
   const seenPoints = new Set(points.map(p => `${p.x}|${p.y}|${p.z}`));
@@ -44,15 +44,25 @@ export function packAttempt(products: Product[], box: Box, spacing: Spacing, ori
     }
     return false;
   }
-  // Reserve space for each active product before completing quantities.
-  for (let i = 0; i < products.length; i++) insert(products[i], orientations[i]);
-  for (let i = 0; i < products.length; i++) while (counts[products[i].productId] < products[i].quantity && insert(products[i], orientations[i])) { /* placements appended by insert */ }
   if (fill) {
+    // Max-fill deliberately ignores the requested quantity. Cycle through product
+    // types and try every allowed orientation when the preferred one is blocked.
     let progress = true;
     while (progress && !truncated) {
       progress = false;
-      for (let i = 0; i < products.length; i++) if (insert(products[i], orientations[i])) progress = true;
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        const rotations = [orientations[i], ...product.rotations.filter(rotation => rotation !== orientations[i])];
+        const start = counts[product.productId] % rotations.length;
+        for (let offset = 0; offset < rotations.length; offset++) {
+          if (insert(product, rotations[(start + offset) % rotations.length])) { progress = true; break; }
+        }
+      }
     }
+  } else {
+    // Desired-count mode reserves and completes each product independently.
+    for (let i = 0; i < products.length; i++) insert(products[i], orientations[i]);
+    for (let i = 0; i < products.length; i++) while (counts[products[i].productId] < products[i].quantity && insert(products[i], orientations[i])) { /* placements appended by insert */ }
   }
   return { placements: indexLayers(placements), truncated };
 }
