@@ -62,7 +62,7 @@ function fallbackMapping(sheet: InspectedSheet, kind: MasterKind, headerRow: num
 function applyCombinedShapeFormatMapping(sheet: InspectedSheet, kind: MasterKind, headerRow: number, mapping: Record<string, number>) {
   if (kind !== "shapes") return;
   const header = sheet.rows.find(row => row.number === headerRow);
-  const combined = header?.cells.find(cell => /^(format|formaat)abh(?:mm)?$/.test(normalize(cell.text)));
+  const combined = header?.cells.find(cell => /^(format|formaat)abh/.test(normalize(cell.text)));
   if (combined) {
     mapping.format_a = combined.column;
     mapping.format_b = combined.column;
@@ -73,10 +73,16 @@ function applyCombinedShapeFormatMapping(sheet: InspectedSheet, kind: MasterKind
 function combinedFormatValues(row: InspectedSheet["rows"][number], column: number) {
   const cell = row.cells.find(candidate => candidate.column === column);
   if (!cell) return undefined;
+  const parsePart = (value: string) => {
+    const match = value.match(/\d+(?:[.,]\d+)?/);
+    return match ? Number(match[0].replace(",", ".")) : NaN;
+  };
+  const separated = cell.text.split(/\s*(?:x|×|\/|;|\||·)\s*/i).map(parsePart);
+  if (separated.length === 3 && separated.every(Number.isFinite)) return separated;
   const values = (cell.text.match(/\d+(?:[.,]\d+)?/g) ?? []).map(value => Number(value.replace(",", ".")));
   if (values.length === 3 && values.every(Number.isFinite)) return values;
   const separateValues = [0, 1, 2].map(offset => row.cells.find(candidate => candidate.column === column + offset)?.text.trim() ?? "");
-  if (separateValues.every(value => /^\d+(?:[.,]\d+)?(?:\s*mm)?$/i.test(value))) return separateValues.map(value => Number(value.replace(/mm/i, "").trim().replace(",", ".")));
+  if (separateValues.every(value => /^\d+(?:[.,]\d+)?(?:\s*mm)?$/i.test(value))) return separateValues.map(value => parsePart(value));
   return undefined;
 }
 
@@ -114,8 +120,8 @@ function parseRows(kind: MasterKind, sheet: InspectedSheet, headerRow: number, m
     const requiredCells = IMPORT_REQUIRED[kind].map(field => row.cells.find(cell => cell.column === mapping[field]));
     if (requiredCells.every(cell => !cell || !cell.text.trim())) continue;
     const item: Record<string, unknown> = {};
-    const combinedFormatColumn = kind === "shapes" && mapping.format_a === mapping.format_b && mapping.format_b === mapping.format_h ? mapping.format_a : undefined;
-    const combinedFormats = combinedFormatColumn ? combinedFormatValues(row, combinedFormatColumn) : undefined;
+    const formatColumn = kind === "shapes" ? mapping.format_a : undefined;
+    const combinedFormats = formatColumn ? combinedFormatValues(row, formatColumn) : undefined;
     for (const field of IMPORT_FIELDS[kind]) {
       const cell = row.cells.find(candidate => candidate.column === mapping[field]);
       const raw = cell?.type === "formule" ? cell.cachedValue : cell?.value;

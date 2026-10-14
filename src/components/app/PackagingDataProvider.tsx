@@ -35,7 +35,7 @@ export const PackagingDataContext = createContext<DataContext | null>(null);
 export function usePackagingData() { const value = useContext(PackagingDataContext); if (!value) throw new Error("PackagingDataProvider ontbreekt."); return value; }
 export function PackagingDataProvider({ children }: { children: ReactNode }) {
   const { session } = useSession(), queryClient = useQueryClient();
-  const [busy, setBusy] = useState(false), [bootstrapping, setBootstrapping] = useState(false);
+  const [busy, setBusy] = useState(false), [bootstrapping, setBootstrapping] = useState(false), [bootstrapError, setBootstrapError] = useState("");
   const seeded = useRef(new Set<"cartons" | "shapes">());
   const userId = session!.user.id, key = ["packaging", userId];
   const query = useQuery({ queryKey: key, queryFn: () => loadRecords(userId), retry: 1 });
@@ -44,6 +44,7 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
     const pending = (["cartons", "shapes"] as const).filter(kind => !seeded.current.has(kind));
     if (!pending.length) return;
     pending.forEach(kind => seeded.current.add(kind));
+    setBootstrapError("");
     setBootstrapping(true);
     void Promise.all(pending.map(async kind => {
       try {
@@ -61,14 +62,16 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
         if (error) throw new Error(error.message);
       } catch (error) {
         seeded.current.delete(kind);
-        toast.error(error instanceof Error ? `${kind === "cartons" ? "Omdozen.xlsx" : "Shapes.xlsx"}: ${error.message}` : "Basisdata kon niet worden geladen.");
+        const message = error instanceof Error ? `${kind === "cartons" ? "Omdozen.xlsx" : "Shapes.xlsx"}: ${error.message}` : "Basisdata kon niet worden geladen.";
+        setBootstrapError(message);
+        toast.error(message);
       }
     })).finally(() => {
       setBootstrapping(false);
       void queryClient.invalidateQueries({ queryKey: key });
     });
   }, [query.data, query.isLoading, queryClient, userId]);
-  async function refresh() { await queryClient.invalidateQueries({ queryKey: ["packaging", userId] }); }
+  async function refresh() { setBootstrapError(""); await queryClient.invalidateQueries({ queryKey: ["packaging", userId] }); }
   async function perform<T,>(operation: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
     try { const result = await operation(); await refresh(); toast.success("Opgeslagen in je werkruimte."); return result; }
@@ -110,5 +113,5 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
       return write("solutions", { name: name.trim(), definition_id: definitionId, packaging_mode: packagingMode, metadata: parent?.metadata ?? {}, based_on: basedOn ?? null, snapshot: { contractVersion: "0.3", ...parsed }, status: "draft", created_from: parsed.editor ? "edited" : basedOn ? sourceMode ? "variant" : "duplicate" : sourceMode === "custom" ? "custom" : "packing" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Ongeldige solution."); return undefined; }
   }
-  return <PackagingDataContext.Provider value={{ storage: "supabase", records: query.data ?? empty, loading: query.isLoading || bootstrapping, error: query.error?.message ?? "", busy: busy || bootstrapping, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;
+  return <PackagingDataContext.Provider value={{ storage: "supabase", records: query.data ?? empty, loading: query.isLoading || bootstrapping, error: query.error?.message ?? bootstrapError, busy: busy || bootstrapping, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;
 }
