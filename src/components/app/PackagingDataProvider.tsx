@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/auth/SessionContext";
+import { loadDefaultMasterRows } from "@/infrastructure/default-masterdata";
 import type { PackagingRecords, RecordKind, Snapshot } from "@/infrastructure/packaging-records";
 import { parseSolutionSnapshot } from "@/infrastructure/solution-snapshot";
 
@@ -34,9 +35,37 @@ export const PackagingDataContext = createContext<DataContext | null>(null);
 export function usePackagingData() { const value = useContext(PackagingDataContext); if (!value) throw new Error("PackagingDataProvider ontbreekt."); return value; }
 export function PackagingDataProvider({ children }: { children: ReactNode }) {
   const { session } = useSession(), queryClient = useQueryClient();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false), [bootstrapping, setBootstrapping] = useState(false);
+  const seeded = useRef(new Set<"cartons" | "shapes">());
   const userId = session!.user.id, key = ["packaging", userId];
   const query = useQuery({ queryKey: key, queryFn: () => loadRecords(userId), retry: 1 });
+  useEffect(() => {
+    if (query.isLoading || !query.data) return;
+    const pending = (["cartons", "shapes"] as const).filter(kind => !seeded.current.has(kind));
+    if (!pending.length) return;
+    pending.forEach(kind => seeded.current.add(kind));
+    setBootstrapping(true);
+    void Promise.all(pending.map(async kind => {
+      try {
+        const defaults = await loadDefaultMasterRows(kind);
+        const existingKeys = kind === "cartons"
+          ? new Set(query.data!.cartons.map(row => row.reference))
+          : new Set(query.data!.shapes.map(row => `${row.shape_id}\u0000${row.variant_id}`));
+        const hasMissingDefaults = defaults.rows.some(row => kind === "cartons"
+          ? !existingKeys.has(String(row.reference))
+          : !existingKeys.has(`${row.shape_id}\u0000${row.variant_id}`));
+        if (!hasMissingDefaults) return;
+        const { error } = await supabase.rpc("seed_packaging_defaults", { p_kind: kind, p_filename: defaults.filename, p_checksum: defaults.checksum, p_rows: defaults.rows });
+        if (error) throw new Error(error.message);
+      } catch (error) {
+        seeded.current.delete(kind);
+        toast.error(error instanceof Error ? `${kind === "cartons" ? "Omdozen.xlsx" : "Shapes.xlsx"}: ${error.message}` : "Basisdata kon niet worden geladen.");
+      }
+    })).finally(() => {
+      setBootstrapping(false);
+      void queryClient.invalidateQueries({ queryKey: key });
+    });
+  }, [query.data, query.isLoading, queryClient, userId]);
   async function refresh() { await queryClient.invalidateQueries({ queryKey: ["packaging", userId] }); }
   async function perform<T,>(operation: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -79,5 +108,5 @@ export function PackagingDataProvider({ children }: { children: ReactNode }) {
       return write("solutions", { name: name.trim(), definition_id: definitionId, packaging_mode: packagingMode, metadata: parent?.metadata ?? {}, based_on: basedOn ?? null, snapshot: { contractVersion: "0.3", ...parsed }, status: "draft", created_from: parsed.editor ? "edited" : basedOn ? sourceMode ? "variant" : "duplicate" : sourceMode === "custom" ? "custom" : "packing" });
     } catch (error) { toast.error(error instanceof Error ? error.message : "Ongeldige solution."); return undefined; }
   }
-  return <PackagingDataContext.Provider value={{ storage: "supabase", records: query.data ?? empty, loading: query.isLoading, error: query.error?.message ?? "", busy, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;
+  return <PackagingDataContext.Provider value={{ storage: "supabase", records: query.data ?? empty, loading: query.isLoading || bootstrapping, error: query.error?.message ?? "", busy: busy || bootstrapping, refresh, write, sync, activate, saveSolution }}>{children}</PackagingDataContext.Provider>;
 }
