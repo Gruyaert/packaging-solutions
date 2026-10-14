@@ -1,6 +1,7 @@
 export interface ViewerPalette {
   readonly productBase: (productIndex: number) => string;
   readonly boxColor: (productIndex: number, shadeIndex: number, layerIndex: number, mode?: "product" | "tints" | "layers") => string;
+  readonly wireColor: (productIndex: number) => string;
   readonly textColor: (color: string) => string;
   readonly bounds: string;
   readonly pallet: string;
@@ -38,6 +39,10 @@ export function viewerBoxColor(productIndex: number, shadeIndex: number, layerIn
   return offset >= 0 ? mix(base, "#ffffff", offset) : mix(base, "#0f172a", Math.abs(offset));
 }
 
+export function viewerWireColor(productIndex: number) {
+  return mix(productBaseColor(productIndex), "#0f172a", 0.34);
+}
+
 export function viewerTextColor(color: string) {
   return luminance(color) > 0.45 ? "#0f172a" : "#ffffff";
 }
@@ -58,9 +63,10 @@ export function createViewerPalette(): ViewerPalette {
     const offset = mode === "layers" ? (layer % 2 ? -0.14 : 0.12) : offsets[((shade % offsets.length) + offsets.length) % offsets.length];
     return offset >= 0 ? mixColor(base, "#ffffff", offset) : mixColor(base, "#0f172a", Math.abs(offset));
   };
+  const wireColor = (index: number) => mixColor(productBase(index), "#0f172a", 0.34);
   const textColor = (color: string) => {
     const source = color.replace("#", ""), channels = [0, 2, 4].map(offset => channel(source.slice(offset, offset + 2)) / 255).map(value => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
     return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2] > 0.45 ? "#0f172a" : "#ffffff";
   };
-  return { productBase, boxColor, textColor, bounds: "#475569", pallet: "#94a3b8", selected: "#0f172a", hover: "#f59e0b" };
+  return { productBase, boxColor, wireColor, textColor, bounds: "#475569", pallet: "#94a3b8", selected: "#0f172a", hover: "#f59e0b" };
 }

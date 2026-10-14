@@ -80,6 +80,8 @@ describe('Shared placement viewer and offline reports', () => {
     expect(parsed.fullSolution.editor.sourceSolutionId).toBe('original');
     expect(report).toContain('Technische data · Full solution JSON'); expect(report).toContain('Validatie / compressibility');
     expect(report).toContain('const paletteFactory='); expect(report).toContain('const bases = ["#2563eb"');
+    expect(report).toContain('wireColor'); expect(report.indexOf('pv-advanced-options')).toBeLessThan(report.indexOf('pv-plot'));
+    expect(report).toContain('Fit inhoud'); expect(report).toContain("rgba(0,0,0,0.001)");
     expect(report).toContain('<details class="appendix technical"><summary>Technische bijlagen');
     expect(report).not.toMatch(/<details[^>]*\bopen(?:\s|=|>)/);
     expect(report.indexOf('Wat gaat in de doos?')).toBeLessThan(report.indexOf('Technische bijlagen'));
