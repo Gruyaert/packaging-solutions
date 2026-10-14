@@ -54,9 +54,11 @@ export function exactFilter(solutions: Solution[], products: Product[]) {
 }
 export function sortSolutions(solutions: Solution[], sorting: Sorting): Solution[] {
   const ecology = (s: Solution) => (s.utilization + s.transportEfficiency) / 2;
+  const verticalFill = (s: Solution) => s.placements.length ? Math.max(...s.placements.map(p => p.z + p.height)) / s.box.height : 0;
+  const fillQuality = (s: Solution) => 0.72 * s.utilization + 0.28 * Math.min(1, verticalFill(s));
   const best = Math.max(0, ...solutions.map(ecology));
   return [...solutions].sort((a, b) => {
-    if (sorting === "fill") return b.utilization - a.utilization || volume(a.box) - volume(b.box);
+    if (sorting === "fill") return fillQuality(b) - fillQuality(a) || b.utilization - a.utilization || volume(a.box) - volume(b.box);
     const aGroup = ecology(a) >= best * 0.75 ? 1 : 0, bGroup = ecology(b) >= best * 0.75 ? 1 : 0;
     return bGroup - aGroup || b.practicalScore - a.practicalScore || b.utilization - a.utilization;
   });

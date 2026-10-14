@@ -54,7 +54,7 @@ export function mountViewer(root: HTMLElement, data: ViewerData, Plotly: any, in
   function pause(){if(timer)clearInterval(timer);timer=undefined;}
   function go(n:number){pause();state.step=Math.max(0,Math.min(ordered.length,n));schedule();}
   function play(){pause();if(!ordered.length)return;if(state.step>=ordered.length)state.step=0;schedule();timer=setInterval(()=>{if(rendering||pending)return;state.step++;schedule();if(state.step>=ordered.length)pause();},800/state.speed);}
-  button('⏮',()=>go(0),timeline,'Naar begin');button('◀',()=>go(state.step-1),timeline,'Vorige stap');button('▶',play,timeline,'Afspelen');button('⏸',pause,timeline,'Pauzeren');button('⏭',()=>go(state.step+1),timeline,'Volgende stap');button('⏭⏭',()=>go(ordered.length),timeline,'Naar einde');
+  button('|<',()=>go(0),timeline,'Naar begin');button('<',()=>go(state.step-1),timeline,'Vorige stap');button('>',play,timeline,'Afspelen');button('||',pause,timeline,'Pauzeren');button('>|',()=>go(state.step+1),timeline,'Volgende stap');button('>>|',()=>go(ordered.length),timeline,'Naar einde');
   select('Snelheid','speed',[0.25,0.5,1,2,4].map(n=>[String(n),`${n}×`]),timeline);
   const warnings=data.products.filter(p=>p.allowCompression||p.compressibilityX||p.compressibilityY||p.compressibilityZ).map(p=>`${p.reference}: allowCompression=${!!p.allowCompression}; X/Y/Z=${p.compressibilityX??0}/${p.compressibilityY??0}/${p.compressibilityZ??0} mm (nominale assen, geen materiaalgoedkeuring)`);
   const validation=root.querySelector('.pv-validation') as HTMLElement;
@@ -101,7 +101,7 @@ export function mountViewer(root: HTMLElement, data: ViewerData, Plotly: any, in
     const axis=(title:string)=>({title,visible:state.axes,showgrid:state.grid,zeroline:state.grid,gridcolor:'#e2e8f0'});
     const layout:any={autosize:true,margin:{l:20,r:10,t:10,b:25},paper_bgcolor:'#ffffff',plot_bgcolor:'#ffffff',font:{color:'#0f172a'},uirevision:`${state.projection}-${state.rotation}`,legend:{orientation:'h'},scene:{aspectmode:'data',dragmode:state.rotation==='free'?'orbit':false,camera,xaxis:axis('X · lengte mm'),yaxis:axis('Y · breedte mm'),zaxis:axis('Z · hoogte mm')},xaxis:axis(state.projection==='side'?'Y mm':'X mm'),yaxis:{...axis(state.projection==='top'?'Y mm':'Z mm'),scaleanchor:'x'}};
     onMetric?.('Plotly build',performance.now()-start);
-    try{const renderStart=performance.now();await Plotly.react(plot,traces,layout,{responsive:true,scrollZoom:true,displaylogo:false,displayModeBar:true,modeBarButtonsToRemove:['sendDataToCloud']});onMetric?.('render',performance.now()-renderStart);}catch(error){if(!disposed)status.textContent=`Viewer kon niet renderen: ${String(error)}. Probeer een 2D-projectie als WebGL niet beschikbaar is.`;(root.querySelector('.pv-status')?.parentElement as HTMLDetailsElement | null)?.setAttribute('open','');}
+    try{const renderStart=performance.now();await Plotly.react(plot,traces,layout,{responsive:true,scrollZoom:true,displaylogo:false,displayModeBar:false});onMetric?.('render',performance.now()-renderStart);}catch(error){if(!disposed)status.textContent=`Viewer kon niet renderen: ${String(error)}. Probeer een 2D-projectie als WebGL niet beschikbaar is.`;(root.querySelector('.pv-status')?.parentElement as HTMLDetailsElement | null)?.setAttribute('open','');}
     finally{rendering=false;if(disposed)Plotly.purge(plot);else {if(pending){pending=false;schedule();}if(cameraPending)queueCamera();}}
   }
   cameraHelp();

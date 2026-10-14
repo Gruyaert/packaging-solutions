@@ -27,14 +27,21 @@ export function packAttempt(products: Product[], box: Box, spacing: Spacing, ori
     options.signal?.throwIfAborted();
     if (placements.length >= limit || checks >= 250000) { truncated = true; return false; }
     if (options.maxWeightKg !== undefined && weightKg + product.weightKg > options.maxWeightKg + EPS) return false;
-    const dims = rotated(product, orientation);
     points.sort((a, b) => a.z - b.z || a.y - b.y || a.x - b.x);
     for (const point of points) {
-      const candidate: Placement = { ...point, ...dims, productId: product.productId, placementId: `p-${placements.length + 1}`, orientation, layerIndex: 0 };
-      checks += placements.length + 1;
-      if (checks > 250000) { truncated = true; return false; }
-      if (options.maxTotalLayers !== undefined && !levels.has(levelKey(candidate.z)) && levels.size >= options.maxTotalLayers) continue;
-      if (!inBounds(candidate, box, spacing) || !respectsMaxima(candidate, placements, product) || placements.some(p => overlaps(candidate, p)) || !supported(candidate, placements)) continue;
+      const candidates: Placement[] = [];
+      for (const candidateOrientation of fill ? [orientation, ...product.rotations.filter(rotation => rotation !== orientation)] : [orientation]) {
+        const candidate: Placement = { ...point, ...rotated(product, candidateOrientation), productId: product.productId, placementId: `p-${placements.length + 1}`, orientation: candidateOrientation, layerIndex: 0 };
+        checks += placements.length + 1;
+        if (checks > 250000) { truncated = true; return false; }
+        if (options.maxTotalLayers !== undefined && !levels.has(levelKey(candidate.z)) && levels.size >= options.maxTotalLayers) continue;
+        if (!inBounds(candidate, box, spacing) || !respectsMaxima(candidate, placements, product) || placements.some(p => overlaps(candidate, p)) || !supported(candidate, placements)) continue;
+        candidates.push(candidate);
+      }
+      const candidate = fill
+        ? candidates.sort((a, b) => b.height - a.height || b.width - a.width || b.length - a.length)[0]
+        : candidates[0];
+      if (!candidate) continue;
       placements.push(candidate); counts[product.productId]++; weightKg += product.weightKg; levels.add(levelKey(candidate.z));
       for (const next of [{ x: candidate.x + candidate.length, y: candidate.y, z: candidate.z }, { x: candidate.x, y: candidate.y + candidate.width, z: candidate.z }, { x: candidate.x, y: candidate.y, z: candidate.z + candidate.height }]) {
         const key = `${next.x}|${next.y}|${next.z}`;

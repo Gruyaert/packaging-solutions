@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app/AppShell";
 import { WorkspaceNavigation } from "@/components/app/WorkspaceNavigation";
@@ -21,6 +21,7 @@ export default function Index() {
   const [shape, setShape] = useState<ShapeRecord>(), [definitionId, setDefinitionId] = useState<string>(), [initial, setInitial] = useState<SolutionRecord>(), [solutionId, setSolutionId] = useState<string>(), [palletSolution, setPalletSolution] = useState<Solution>();
   const [palletProducts, setPalletProducts] = useState<Product[]>([]);
   const [palletContext, setPalletContext] = useState<{ definitionId?: string; mode?: "STOCK" | "PERSO" }>();
+  const rememberSelection = useCallback((solution: Solution | undefined, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }) => { setPalletSolution(solution); setPalletProducts(products); setPalletContext(context); }, []);
   const navigate = (value: string) => { setTab(value); if (value === "search" || value === "custom") setMode(value); };
   const openSolution = (id: string) => { setSolutionId(id); setTab("solutions"); };
   const palletize = (solution: Solution, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }) => { const record = records.solutions.find(r => r.snapshot.solution.solutionId === solution.solutionId); setPalletSolution(solution); setPalletProducts(products); setPalletContext(record ? { definitionId: record.definition_id ?? undefined, mode: record.packaging_mode } : context); setTab("pallet"); };
@@ -31,7 +32,7 @@ export default function Index() {
     {loading && <p className="rounded-2xl border bg-card p-5 text-sm">Werkruimte laden…</p>}
     {error && <div role="alert" className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-4"><p className="text-sm text-destructive">Werkruimte niet geladen: {error}</p><Button variant="outline" className="rounded-xl" onClick={() => refresh()}>Opnieuw laden</Button></div>}
     {!loading && !error && <>
-      {(tab === "search" || tab === "custom") && <PackingWorkbench mode={mode} initial={initial} definitionId={definitionId} onSaved={openSolution} onPalletize={palletize} />}
+      <div className={tab === "search" || tab === "custom" ? "" : "hidden"}><PackingWorkbench mode={mode} initial={initial} definitionId={definitionId} onSaved={openSolution} onPalletize={palletize} onSelectionChange={rememberSelection} /></div>
       {tab === "pallet" && <PalletPanel solution={palletSolution} products={palletProducts} context={palletContext} />}
       {tab === "cartons" && <CartonManagement />}
       {tab === "shapes" && <ShapeManagement onDefinition={s => { setShape(s); setTab("definitions"); }} />}

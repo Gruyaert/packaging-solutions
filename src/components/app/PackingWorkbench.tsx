@@ -8,7 +8,8 @@ import { assertInput, weightInKg, type Box, type Product, type Solution, type So
 import { exactFilter, sortSolutions } from "@/domain/packing/scoring";
 import type { PackingRequest, PackingResponse } from "@/application/packing-job";
 import { toBox, type SolutionRecord } from "@/infrastructure/packaging-records";
-import { newProduct, NumberField, ProductInputs } from "./ProductInputs";
+import { newProduct, NumberField, ProductInputs, type ProductDraft } from "./ProductInputs";
+import { readPackingSession, writePackingSession } from "@/application/packing-session";
 import { usePackagingData } from "./PackagingDataProvider";
 import { RecordTable } from "./RecordTable";
 import { DimensionGuide } from "./DimensionGuide";
@@ -16,28 +17,31 @@ import { PackingResults } from "./PackingResults";
 import { WorkspacePanel } from "./WorkspacePanel";
 import "./workspace-layout.css";
 
-export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }): void }) {
+export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalletize, onSelectionChange }: { mode: "search" | "custom"; initial?: SolutionRecord; definitionId?: string; onSaved(id: string): void; onPalletize(solution: Solution, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }): void; onSelectionChange(solution: Solution | undefined, products: Product[], context?: { definitionId?: string; mode?: "STOCK" | "PERSO" }): void }) {
   const { records, storage } = usePackagingData();
-  const [products, setProducts] = useState([newProduct(1)]), [source, setSource] = useState("database");
-  const [strategy, setStrategy] = useState<Strategy>("desired"), [sorting, setSorting] = useState<Sorting>("fill"), [exact, setExact] = useState(false);
-  const [spacing, setSpacing] = useState<Spacing>({ length: 0, width: 0, height: 0 });
-  const [custom, setCustom] = useState<CustomSettings>({ ...DEFAULT_CUSTOM });
-  const [manual, setManual] = useState<Box[]>([{ boxId: "manual-1", reference: "Handmatige doos 1", length: 0, width: 0, height: 0, cardboard: 0 }]);
-  const [maxWeight, setMaxWeight] = useState(0), [maxLayers, setMaxLayers] = useState(0);
-  const [response, setResponse] = useState<Extract<PackingResponse, { result: unknown }>>();
-  const [resultProducts, setResultProducts] = useState<Product[]>([]), [resultMode, setResultMode] = useState<"search" | "custom">("search");
-  const [selectedId, setSelectedId] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const stored = useRef(readPackingSession()).current;
+  const draftProducts = (values: Product[]): ProductDraft[] => values.map(p => { const inKg = Math.abs(p.weightKg * 1000 - Math.round(p.weightKg * 1000)) < 1e-6; return { ...p, inputWeight: inKg ? p.weightKg : Number((p.weightKg * 1000).toFixed(3)), weightUnit: inKg ? "kg" as const : "g" as const }; });
+  const [products, setProducts] = useState<ProductDraft[]>(() => initial ? draftProducts(initial.snapshot.products) : stored?.products ?? [newProduct(1)]), [source, setSource] = useState(() => stored?.source ?? "database");
+  const [strategy, setStrategy] = useState<Strategy>(() => stored?.strategy ?? "desired"), [sorting, setSorting] = useState<Sorting>(() => stored?.sorting ?? "fill"), [exact, setExact] = useState(() => stored?.exact ?? false);
+  const [spacing, setSpacing] = useState<Spacing>(() => stored?.spacing ?? { length: 0, width: 0, height: 0 });
+  const [custom, setCustom] = useState<CustomSettings>(() => stored?.custom ?? { ...DEFAULT_CUSTOM });
+  const [manual, setManual] = useState<Box[]>(() => stored?.manual ?? [{ boxId: "manual-1", reference: "Handmatige doos 1", length: 0, width: 0, height: 0, cardboard: 0 }]);
+  const [maxWeight, setMaxWeight] = useState(() => stored?.maxWeight ?? 0), [maxLayers, setMaxLayers] = useState(() => stored?.maxLayers ?? 0);
+  const [response, setResponse] = useState<Extract<PackingResponse, { result: unknown }>>(() => stored?.response as Extract<PackingResponse, { result: unknown }> | undefined);
+  const [resultProducts, setResultProducts] = useState<Product[]>(() => stored?.resultProducts ?? []), [resultMode, setResultMode] = useState<"search" | "custom">(() => stored?.resultMode ?? "search");
+  const [selectedId, setSelectedId] = useState(() => stored?.selectedId ?? ""), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const workerRef = useRef<Worker | undefined>(undefined);
   const cache = useRef(createResultCache<Extract<PackingResponse, { result: unknown }>>());
   const databaseBoxes = useMemo(() => records.cartons.filter(carton => carton.active).map(toBox), [records.cartons]);
   useEffect(() => () => { workerRef.current?.terminate(); cache.current.clear(); }, []);
   useEffect(() => {
-    workerRef.current?.terminate(); workerRef.current = undefined; cache.current.clear(); setBusy(false); setResponse(undefined); setError("");
-    if (!initial) { setProducts([newProduct(1)]); setSpacing({ length: 0, width: 0, height: 0 }); setManual([{ boxId: "manual-1", reference: "Handmatige doos 1", length: 0, width: 0, height: 0, cardboard: 0 }]); setSource("database"); setMaxWeight(0); setMaxLayers(0); return; }
+    workerRef.current?.terminate(); workerRef.current = undefined; cache.current.clear(); setBusy(false); setError("");
+    if (!initial) return;
     const snapshot = initial.snapshot;
-    setProducts(snapshot.products.map(p => { const inKg = Math.abs(p.weightKg * 1000 - Math.round(p.weightKg * 1000)) < 1e-6; return { ...p, inputWeight: inKg ? p.weightKg : Number((p.weightKg * 1000).toFixed(3)), weightUnit: inKg ? "kg" as const : "g" as const }; }));
+    setProducts(draftProducts(snapshot.products));
     setSpacing(snapshot.solution.spacing); setManual([snapshot.solution.box]); setSource("manual"); setCustom(c => ({ ...c, cardboard: snapshot.solution.box.cardboard }));
-  }, [initial, definitionId]);
+    setResponse(undefined); setResultProducts([]); setResultMode(mode); setSelectedId("");
+  }, [initial, definitionId, mode]);
   function calculate() {
     setError("");
     try {
@@ -67,6 +71,8 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
   const ranked = useMemo(() => { const start = performance.now(); const filtered = response ? (exact ? exactFilter(response.result.solutions, resultProducts) : response.result.solutions) : []; const result = linear ? filtered : sortSolutions(filtered, sorting); if (response) recordMetric('scoring', performance.now() - start); return result; }, [response, exact, resultProducts, linear, sorting]);
   const selected = ranked.find(s => s.solutionId === selectedId) ?? ranked[0];
   const context = records.definitions.find(d => d.id === (initial?.definition_id ?? definitionId));
+  useEffect(() => { onSelectionChange(selected, resultProducts, { definitionId: initial?.definition_id ?? definitionId, mode: mode === "custom" ? "PERSO" : "STOCK" }); }, [selected, resultProducts, initial?.definition_id, definitionId, mode, onSelectionChange]);
+  useEffect(() => { writePackingSession({ mode, products, source, strategy, sorting, exact, spacing, custom, manual, maxWeight, maxLayers, response, resultProducts, resultMode, selectedId, selectedSolution: selected, definitionId: initial?.definition_id ?? definitionId }); }, [mode, products, source, strategy, sorting, exact, spacing, custom, manual, maxWeight, maxLayers, response, resultProducts, resultMode, selectedId, selected, initial?.definition_id, definitionId]);
   const candidateCount = mode === "search" ? (source === "database" ? databaseBoxes.length : manual.length) : 0;
   return <section className="packing-workbench min-w-0 space-y-5"><div><h1 className="text-2xl font-semibold tracking-tight">{mode === "search" ? "Verpakking zoeken" : "Omdoos op maat"}</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{context ? `Context: ${context.name} · ${context.scope} · ${context.packaging_mode}. ` : ""}{initial && "Bewerken maakt een nieuwe variant; het origineel blijft ongewijzigd. "}{mode === "search" ? "Laat het systeem alle actieve omdozen vergelijken en kies daarna de meest geschikte oplossing." : "Bereken een passende maatwerkdoos op basis van je product en de praktische randvoorwaarden."}</p></div>
     <div className="packing-layout min-w-0 items-start gap-5">
