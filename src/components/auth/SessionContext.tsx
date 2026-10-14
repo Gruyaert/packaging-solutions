@@ -5,7 +5,8 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { authErrorMessage } from "@/infrastructure/auth-error";
 
-export interface UserProfile { id: string; email: string; display_name: string; role: "user" | "admin"; }
+export type UserRole = "user" | "admin" | "super_admin";
+export interface UserProfile { id: string; email: string; display_name: string; role: UserRole; }
 type SessionContextValue = { session: Session | null; profile: UserProfile | null; loading: boolean; profileLoading: boolean; error: string; recovery: boolean; finishRecovery(): void };
 const SessionContext = createContext<SessionContextValue>({ session: null, profile: null, loading: true, profileLoading: true, error: "", recovery: false, finishRecovery() {} });
 export const useSession = () => useContext(SessionContext);
@@ -52,5 +53,5 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   const { session, loading, profileLoading, profile } = useSession();
   if (loading || profileLoading) return <p className="p-8 text-sm text-muted-foreground">Bevoegdheden controleren…</p>;
   if (!session) return <Navigate to="/login" replace />;
-  return profile?.role === "admin" ? <>{children}</> : <Navigate to="/" replace />;
+  return profile?.role === "admin" || profile?.role === "super_admin" ? <>{children}</> : <Navigate to="/" replace />;
 }
