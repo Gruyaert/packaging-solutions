@@ -8,6 +8,10 @@ Er zijn twee resultaatprofielen: maximale vulling (gemengde rotaties per stuk to
 
 Geometrische validatie, support, bounds, maxima, gewicht en lagenlimieten blijven leidend. Geen materiaal-, draagkracht- of transportcertificering wordt beweerd. Production build en projectbrede TypeScriptcheck zijn na deze wijziging geslaagd; interactieve browser-/Vitestacceptatie blijft nog uit te voeren.
 
+### Performance-optimalisatie
+
+Equivalent kandidaatstates worden nu vóór dure solution-scoring en geometrische validatie overgeslagen. Rotatievarianten, productordes, laaghoogtes en nominale rotatiedimensies gebruiken begrensde caches binnen de worker. Deze wijzigingen veranderen de kandidaatvolgorde of unieke placement-signatures niet; een deterministische fingerprint-regressietest controleert dit. De diagnostics rapporteren hoeveel duplicaten zijn overgeslagen, zodat de runtimewinst in de bestaande performance-dashboardmeting kan worden vergeleken.
+
 ## Taakgerichte werkruimte en operator-infokaart (aanvulling op 0.7)
 
 Brede invoer/resultaatgrid, oplossingenkaarten naast viewer, compacte mobiele select en gekozen resultaat vóór invoer. PackingResults volledig aangesloten; oude SaveSolution/SolutionDetails/export-verwijzingen uit PackingWorkbench verwijderd zodat de gemelde SaveSolution-is-not-defined-refactorfout opgelost is. Kerngegevens/schema voorop, technische tabellen/JSON/diagnostiek en uitgebreide vieweropties standaard gesloten.

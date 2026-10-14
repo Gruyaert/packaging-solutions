@@ -47,6 +47,7 @@ export interface SearchDiagnostics {
   orderings: string[];
   validCandidates: number;
   rejectedCandidates: number;
+  duplicateCandidates: number;
   rejectionReasons: Record<string, number>;
   profile: SearchProfile;
 }

@@ -98,6 +98,7 @@ export function customBoxes(products: Product[], spacing: Spacing, settings: Cus
     orderings: ["input", "area", "longest", "shortest", "reverse"],
     validCandidates: solutions.length,
     rejectedCandidates: rejected.length,
+    duplicateCandidates: 0,
     rejectionReasons: rejected.reduce<Record<string, number>>((result, item) => { for (const error of item.errors) result[error] = (result[error] ?? 0) + 1; return result; }, {}),
     profile,
   };

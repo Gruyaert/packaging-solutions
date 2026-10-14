@@ -5,7 +5,8 @@ import { isSimplePattern, makeSolution, sortSolutions } from "./scoring";
 
 export function rotationVariants(products: Product[]): Orientation[][] {
   const result: Orientation[][] = [];
-  const add = (value: Orientation[]) => { if (!result.some(existing => JSON.stringify(existing) === JSON.stringify(value))) result.push(value); };
+  const seen = new Set<string>();
+  const add = (value: Orientation[]) => { const key = value.join("|"); if (!seen.has(key)) { seen.add(key); result.push(value); } };
   for (let offset = 0; offset < 6; offset++) add(products.map(product => product.rotations[offset % product.rotations.length]));
   function visit(index: number, chosen: Orientation[]) {
     if (result.length >= 24) return;
@@ -185,8 +186,9 @@ export function searchPackaging(products: Product[], boxes: Box[], spacing: Spac
   const budget = Math.max(boxes.length, options.maxAttempts ?? 96);
   const solutions: SearchResult["solutions"] = [];
   const signatures = new Set<string>();
+  const invalidSignatures = new Set<string>();
   const rejected: { pattern: string; errors: string[] }[] = [];
-  const diagnostics = { beamWidth: options.beamWidth ?? 24, layerCandidateLimit: options.layerCandidateLimit ?? 24, statesExplored: 0, statesRetained: 0, layerHeights: new Set<number>(), strategies: new Set<string>(), orderings: new Set<string>(), validCandidates: 0, rejectedCandidates: 0, rejectionReasons: {} as Record<string, number>, profile };
+  const diagnostics = { beamWidth: options.beamWidth ?? 24, layerCandidateLimit: options.layerCandidateLimit ?? 24, statesExplored: 0, statesRetained: 0, layerHeights: new Set<number>(), strategies: new Set<string>(), orderings: new Set<string>(), validCandidates: 0, rejectedCandidates: 0, duplicateCandidates: 0, rejectionReasons: {} as Record<string, number>, profile };
   let attempts = 0, truncated = false;
   const orders = [products, [...products].sort((a, b) => volume(b) - volume(a) || b.height - a.height), [...products].reverse()];
   outer: for (const box of boxes) {
@@ -203,16 +205,19 @@ export function searchPackaging(products: Product[], boxes: Box[], spacing: Spac
       for (const state of run.states) {
         if (!state.placements.length) continue;
         state.patterns.forEach(pattern => { const [method, ordering] = pattern.split(" · "); diagnostics.strategies.add(method); diagnostics.orderings.add(ordering); });
+        const candidateSignature = resultSignature(box, state.placements);
+        if (signatures.has(candidateSignature) || invalidSignatures.has(candidateSignature)) { diagnostics.duplicateCandidates++; continue; }
         const solution = makeSolution(`solution-${attempts}-${solutions.length + 1}`, products, box, spacing, state.placements, `layer-beam · ${state.patterns.join(" / ")}`, false, profile);
         if (solution.validation.status !== "valid") {
+          invalidSignatures.add(candidateSignature);
           diagnostics.rejectedCandidates++;
           solution.validation.errors.forEach(error => { diagnostics.rejectionReasons[error] = (diagnostics.rejectionReasons[error] ?? 0) + 1; });
           rejected.push({ pattern: solution.metadata.pattern, errors: solution.validation.errors });
           continue;
         }
         diagnostics.validCandidates++;
-        const signature = resultSignature(box, solution.placements);
-        if (!signatures.has(signature)) { signatures.add(signature); solutions.push(solution); }
+        signatures.add(candidateSignature);
+        solutions.push(solution);
       }
     }
   }
@@ -224,6 +229,6 @@ export function searchPackaging(products: Product[], boxes: Box[], spacing: Spac
   }
   const perBox = new Map<string, number>();
   ranked = ranked.filter(solution => { const count = perBox.get(solution.box.boxId) ?? 0; if (count >= 20) return false; perBox.set(solution.box.boxId, count + 1); return true; });
-  const resultDiagnostics = { beamWidth: diagnostics.beamWidth, layerCandidateLimit: diagnostics.layerCandidateLimit, statesExplored: diagnostics.statesExplored, statesRetained: diagnostics.statesRetained, layerHeights: [...diagnostics.layerHeights].sort((a, b) => a - b), strategies: [...diagnostics.strategies], orderings: [...diagnostics.orderings], validCandidates: diagnostics.validCandidates, rejectedCandidates: diagnostics.rejectedCandidates, rejectionReasons: diagnostics.rejectionReasons, profile: diagnostics.profile };
-  return { solutions: ranked, attempts, truncated, rejected: rejected.slice(0, 40), diagnostics: resultDiagnostics, warnings: ["ZITE-style laag-voor-laag beam search; geen bewijs van globaal optimum.", "Elke kandidaat is opnieuw geometrisch gevalideerd.", ...(profile === "simple-practical" ? ["Eenvoudige/praktische kandidaten zijn geselecteerd op oriëntatie, laagherhaling en rasterregelmaat."] : []), ...(truncated ? ["Zoeklimiet bereikt; resultaten zijn niet volledig."] : [])] };
+  const resultDiagnostics = { beamWidth: diagnostics.beamWidth, layerCandidateLimit: diagnostics.layerCandidateLimit, statesExplored: diagnostics.statesExplored, statesRetained: diagnostics.statesRetained, layerHeights: [...diagnostics.layerHeights].sort((a, b) => a - b), strategies: [...diagnostics.strategies], orderings: [...diagnostics.orderings], validCandidates: diagnostics.validCandidates, rejectedCandidates: diagnostics.rejectedCandidates, duplicateCandidates: diagnostics.duplicateCandidates, rejectionReasons: diagnostics.rejectionReasons, profile: diagnostics.profile };
+  return { solutions: ranked, attempts, truncated, rejected: rejected.slice(0, 40), diagnostics: resultDiagnostics, warnings: ["ZITE-style laag-voor-laag beam search; geen bewijs van globaal optimum.", "Elke kandidaat is opnieuw geometrisch gevalideerd.", `Identieke kandidaatstates overgeslagen: ${diagnostics.duplicateCandidates}.`, ...(profile === "simple-practical" ? ["Eenvoudige/praktische kandidaten zijn geselecteerd op oriëntatie, laagherhaling en rasterregelmaat."] : []), ...(truncated ? ["Zoeklimiet bereikt; resultaten zijn niet volledig."] : [])] };
 }

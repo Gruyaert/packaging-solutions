@@ -51,23 +51,32 @@ function placementScore(rect: FreeRect, dims: Dimensions, strategy: LayerStrateg
   return rect.length * rect.width - dims.length * dims.width;
 }
 
+const orderCache = new Map<string, Product[][]>();
 function productOrders(products: Product[], preferred: Orientation[]) {
+  const cacheKey = JSON.stringify([products.map(product => [product.productId, product.length, product.width, product.height, product.rotations]), preferred]);
+  const cached = orderCache.get(cacheKey);
+  if (cached) return cached;
   const base = [...products];
   const area = [...products].sort((a, b) => b.length * b.width - a.length * a.width || b.height - a.height);
   const longest = [...products].sort((a, b) => Math.max(b.length, b.width) - Math.max(a.length, a.width));
   const shortest = [...products].sort((a, b) => Math.min(a.length, a.width) - Math.min(b.length, b.width));
   const reverse = [...products].reverse();
   const orders = [base, area, longest, shortest, reverse];
+  const preferredRanks = new Map(preferred.map((rotation, index) => [rotation, index]));
   const seen = new Set<string>();
-  return orders.filter(order => {
+  const result = orders.filter(order => {
     const key = order.map(product => product.productId).join("|");
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   }).map(order => {
-    const preferredFirst = [...order].sort((a, b) => preferred.indexOf(preferred.find(r => a.rotations.includes(r)) ?? a.rotations[0]) - preferred.indexOf(preferred.find(r => b.rotations.includes(r)) ?? b.rotations[0]));
+    const rank = (product: Product) => { const first = preferred.find(rotation => product.rotations.includes(rotation)) ?? product.rotations[0]; return preferredRanks.get(first) ?? -1; };
+    const preferredFirst = [...order].sort((a, b) => rank(a) - rank(b));
     return preferredFirst.length ? preferredFirst : order;
   });
+  if (orderCache.size >= 64) orderCache.delete(orderCache.keys().next().value as string);
+  orderCache.set(cacheKey, result);
+  return result;
 }
 
 function buildLayer(
@@ -87,16 +96,22 @@ function buildLayer(
   let free: FreeRect[] = [usable];
   const placements: Placement[] = [];
   const counts: Record<string, number> = Object.fromEntries(products.map(product => [product.productId, 0]));
+  const dimensions = new Map<string, Dimensions>();
+  const allRotations = new Map<string, Orientation[]>();
+  for (const product of products) {
+    allRotations.set(product.productId, profile === "simple-practical"
+      ? [preferred.find(rotation => product.rotations.includes(rotation)) ?? product.rotations[0]]
+      : [...new Set([...preferred.filter(rotation => product.rotations.includes(rotation)), ...product.rotations.filter(rotation => !preferred.includes(rotation))])]);
+    for (const orientation of product.rotations) dimensions.set(`${product.productId}|${orientation}`, rotated(product, orientation));
+  }
   let serial = 0;
   while (free.length && placements.length < 500) {
     let best: { product: Product; orientation: Orientation; rect: FreeRect; dims: Dimensions; score: number } | undefined;
     for (const product of products) {
       if ((remaining[product.productId] ?? 0) <= counts[product.productId]) continue;
-      const rotations = profile === "simple-practical"
-        ? [preferred.find(rotation => product.rotations.includes(rotation)) ?? product.rotations[0]]
-        : [...preferred.filter(rotation => product.rotations.includes(rotation)), ...product.rotations.filter(rotation => !preferred.includes(rotation))];
-      for (const orientation of [...new Set(rotations)]) {
-        const dims = rotated(product, orientation);
+      const rotations = allRotations.get(product.productId) ?? product.rotations;
+      for (const orientation of rotations) {
+        const dims = dimensions.get(`${product.productId}|${orientation}`)!;
         if (Math.abs(dims.height - layerHeight) > EPS) continue;
         for (const rect of free) {
           if (dims.length > rect.length + EPS || dims.width > rect.width + EPS) continue;
@@ -116,10 +131,17 @@ function buildLayer(
   return { height: layerHeight, placements, counts, strategy, ordering: orderLabel, signature };
 }
 
+const heightCache = new Map<string, number[]>();
 export function layerHeightCandidates(products: Product[], remaining: Record<string, number>) {
+  const cacheKey = JSON.stringify([products.map(product => [product.productId, product.length, product.width, product.height, product.rotations]), remaining]);
+  const cached = heightCache.get(cacheKey);
+  if (cached) return cached;
   const heights = new Set<number>();
   for (const product of products) if ((remaining[product.productId] ?? 0) > 0) for (const orientation of product.rotations) heights.add(rotated(product, orientation).height);
-  return [...heights].sort((a, b) => a - b);
+  const result = [...heights].sort((a, b) => a - b);
+  if (heightCache.size >= 128) heightCache.delete(heightCache.keys().next().value as string);
+  heightCache.set(cacheKey, result);
+  return result;
 }
 
 export function generateLayerPatterns(

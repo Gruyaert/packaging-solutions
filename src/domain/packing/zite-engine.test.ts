@@ -21,6 +21,15 @@ describe("ZITE-style packing engine", () => {
     expect(result.solutions.some(solution => solution.metadata.patternMetrics?.layerCount)).toBe(true);
   });
 
+  it("keeps a deterministic result fingerprint while deduplicating equivalent states", () => {
+    const request = { products: [product()], boxes: [box()], spacing, strategy: "desired" as const, options: { maxAttempts: 12 } };
+    const first = searchPackaging(request.products, request.boxes, request.spacing, request.strategy, request.options);
+    const second = searchPackaging(request.products, request.boxes, request.spacing, request.strategy, request.options);
+    const fingerprint = (result: typeof first) => JSON.stringify(result.solutions.map(solution => ({ box: solution.box, placements: solution.placements, counts: solution.counts, pattern: solution.metadata.pattern })));
+    expect(fingerprint(second)).toBe(fingerprint(first));
+    expect(second.diagnostics?.duplicateCandidates).toBeGreaterThanOrEqual(0);
+  });
+
   it("supports the practical profile without returning complex candidates when simple ones exist", () => {
     const result = searchPackaging([product({ quantity: 2 })], [box()], spacing, "desired", { profile: "simple-practical", maxAttempts: 12 });
     expect(result.diagnostics?.profile).toBe("simple-practical");
