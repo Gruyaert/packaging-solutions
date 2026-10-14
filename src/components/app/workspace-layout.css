@@ -2,7 +2,7 @@
 .packing-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.25rem; }
 .packing-input-panel, .packing-result-panel, .packing-results, .packing-result-visual, .packing-result-list { min-width: 0; max-width: 100%; }
 .packing-results { container: packing-results / inline-size; }
-.packing-result-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+.packing-result-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; max-height: min(520px, 60dvh); overflow-y: auto; padding-right: .25rem; }
 .packing-auto-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: .75rem; }
 .product-inputs { container: product-inputs / inline-size; }
 .product-dimension-grid, .product-quantity-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
