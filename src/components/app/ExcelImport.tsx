@@ -1,9 +1,3 @@
-"""Excel import component for shapes and cartons masterdata.
-
-This component provides a user-friendly way to import masterdata from Excel files,
-with intelligent column recognition and change detection.
-"""
-
 import { useState } from "react";
 import { Sparkles, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
