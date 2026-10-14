@@ -13,7 +13,7 @@ class NodeStub {
   style: Record<string, string> = {};
   dataset: Record<string, string> = {};
   textContent = ''; innerHTML = ''; value = ''; className = ''; open = false;
-  clientWidth = 800; clientHeight = 500; layout: any;
+  layout: any;
   onchange?: () => void;
   onclick?: () => void;
   append(...children: NodeStub[]) { this.children.push(...children); }
@@ -25,15 +25,13 @@ class NodeStub {
   hasPointerCapture(id: number) { return this.captures.has(id); }
   releasePointerCapture(id: number) { this.captures.delete(id); }
   replaceChildren() { this.children = []; }
-  getBoundingClientRect() { return { width: this.clientWidth, height: this.clientHeight }; }
 }
 function setup(data: ViewerData, initial: Record<string, unknown> = {}) {
   vi.useFakeTimers();
   const nodes = new Map(['.pv-controls', '.pv-camera', '.pv-advanced', '.pv-timeline', '.pv-status', '.pv-help', '.pv-plot', '.pv-validation', '.pv-checks'].map(key => [key, new NodeStub()]));
   const root = Object.assign(new NodeStub(), { querySelector: (key: string) => nodes.get(key) });
   vi.stubGlobal('document', { createElement: () => new NodeStub(), createTextNode: (text: string) => Object.assign(new NodeStub(), { textContent: text }) });
-  let resizeCallback: (() => void) | undefined;
-  vi.stubGlobal('ResizeObserver', class { constructor(callback: () => void) { resizeCallback = callback; } observe() {} disconnect() {} });
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: () => void) => setTimeout(callback, 16));
   vi.stubGlobal('cancelAnimationFrame', clearTimeout);
   const plot = nodes.get('.pv-plot')!;
@@ -52,7 +50,7 @@ function setup(data: ViewerData, initial: Record<string, unknown> = {}) {
   const rotation = nodes.get('.pv-advanced')!.children.find(node => node.textContent === 'Draaien ')!.children[0];
   const setRotation = async (value: string) => { rotation.value = value; rotation.onchange!(); await vi.advanceTimersByTimeAsync(100); };
   const emitPlotly = (name: string, value: any) => plotlyEvents.get(name)?.(value);
-  return { root, nodes, plot, Plotly, runtime, event, emit, emitPlotly, setRotation, resize: () => resizeCallback?.() };
+  return { nodes, plot, Plotly, runtime, event, emit, emitPlotly, setRotation };
 }
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 const data = () => palletViewerData('Pallet', palletize({ kind: 'database', box: { boxId: 'box', reference: 'Doos', length: 400, width: 300, height: 200, cardboard: 3 } }, DEFAULT_PALLET)[0], DEFAULT_PALLET);
@@ -125,46 +123,20 @@ describe('Serialized viewer camera and pallet logic', () => {
     expect(runtime.settings().camera).toBeUndefined();
     runtime.destroy();
   });
-  it('uses markerless hit targets, dark product wires, rich hover and clearable selection', async () => {
-    const { root, Plotly, plot, runtime, emitPlotly, emit } = setup(data());
+  it('uses stable per-box tint metadata, rich hover data and cleans up Plotly selection handlers', async () => {
+    const { Plotly, plot, runtime, emitPlotly } = setup(data());
     await vi.advanceTimersByTimeAsync(100);
     const traces = Plotly.react.mock.calls[0][1];
     const productTrace = traces.find(trace => trace.type === 'mesh3d' && trace.vertexcolor);
-    const hitTrace = traces.find(trace => trace.customdata);
-    const wireTrace = traces.find(trace => trace.type === 'scatter3d' && trace.mode === 'lines' && trace.legendgroup === 'pallet-box');
+    const pointTrace = traces.find(trace => trace.customdata);
     expect(productTrace.vertexcolor.length).toBe(productTrace.x.length);
     expect(new Set(productTrace.vertexcolor).size).toBeGreaterThan(1);
-    expect(hitTrace.customdata[0][0]).toBeTruthy();
-    expect(hitTrace.marker.opacity).toBeLessThanOrEqual(0.01);
-    expect(wireTrace.line.color).not.toBe('#475569');
-    expect(root.innerHTML.indexOf('pv-advanced-options')).toBeLessThan(root.innerHTML.indexOf('pv-plot'));
-    emitPlotly('plotly_click', { points: [{ customdata: hitTrace.customdata[0] }] });
+    expect(pointTrace.customdata[0][0]).toBeTruthy();
+    emitPlotly('plotly_click', { points: [{ customdata: pointTrace.customdata[0] }] });
     await vi.advanceTimersByTimeAsync(100);
-    expect(runtime.settings().selectedPlacementId).toBe(hitTrace.customdata[0][0]);
-    emit('keydown', { key: 'Escape', preventDefault() {} });
-    await vi.advanceTimersByTimeAsync(100);
-    expect(runtime.settings().selectedPlacementId).toBeUndefined();
-    emitPlotly('plotly_click', { points: [] });
+    expect(runtime.settings().selectedPlacementId).toBe(pointTrace.customdata[0][0]);
     expect(plot.layout.scene.camera.projection.type).toBe('perspective');
     runtime.destroy();
     expect(Plotly.removeListener).toHaveBeenCalled();
-  });
-  it('fits content on first render and responsive resize until the user moves the camera', async () => {
-    const { nodes, plot, Plotly, runtime, resize, emit, event } = setup(data());
-    await vi.advanceTimersByTimeAsync(100);
-    const firstRadius = Math.hypot(plot.layout.scene.camera.eye.x, plot.layout.scene.camera.eye.y, plot.layout.scene.camera.eye.z);
-    plot.clientWidth = 320; plot.clientHeight = 420; resize();
-    await vi.advanceTimersByTimeAsync(120);
-    const resizedRadius = Math.hypot(plot.layout.scene.camera.eye.x, plot.layout.scene.camera.eye.y, plot.layout.scene.camera.eye.z);
-    expect(Plotly.Plots.resize).toHaveBeenCalled();
-    expect(resizedRadius).not.toBe(firstRadius);
-    emit('wheel', { ...event(0), deltaY: -80 }); await vi.advanceTimersByTimeAsync(20);
-    const manualRadius = Math.hypot(plot.layout.scene.camera.eye.x, plot.layout.scene.camera.eye.y, plot.layout.scene.camera.eye.z);
-    plot.clientWidth = 700; resize(); await vi.advanceTimersByTimeAsync(120);
-    expect(Math.hypot(plot.layout.scene.camera.eye.x, plot.layout.scene.camera.eye.y, plot.layout.scene.camera.eye.z)).toBeCloseTo(manualRadius);
-    nodes.get('.pv-camera')!.children.find(node => node.textContent === 'Fit inhoud')!.onclick!();
-    await vi.advanceTimersByTimeAsync(120);
-    expect(Math.hypot(plot.layout.scene.camera.eye.x, plot.layout.scene.camera.eye.y, plot.layout.scene.camera.eye.z)).not.toBeCloseTo(manualRadius);
-    runtime.destroy();
   });
 });

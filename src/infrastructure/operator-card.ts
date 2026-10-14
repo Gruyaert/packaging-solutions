@@ -1,6 +1,5 @@
 import type { ViewerData } from '@/visualization/viewer-runtime';
 import { createViewerModel } from '@/visualization/viewer-model';
-import { viewerBoxColor, viewerWireColor } from '@/visualization/viewer-palette';
 import type { Solution } from '@/domain/packing/types';
 import { outside } from '@/domain/packing/types';
 import type { PalletResult, PalletSettings, PalletSource } from '@/domain/packing/pallet';
@@ -27,8 +26,9 @@ export function operatorCardBody(data: ViewerData, escape: (value: unknown) => s
   const shown = first.slice(0,600);
   const minX=Math.min(0,...shown.map(p=>p.x)),minY=Math.min(0,...shown.map(p=>p.y));
   const maxX=Math.max(data.bounds.length,...shown.map(p=>p.x+p.length)),maxY=Math.max(data.bounds.width,...shown.map(p=>p.y+p.width));
-  const viewerModel=createViewerModel(data.placements),ids=viewerModel.ids,itemById=new Map(viewerModel.items.map(item=>[item.placementId,item]));
-  const plan=`<svg class="layer-plan" viewBox="${minX-10} ${minY-10} ${maxX-minX+20} ${maxY-minY+20}" role="img" aria-label="Bovenaanzicht eerste laag"><rect x="0" y="0" width="${data.bounds.length}" height="${data.bounds.width}" fill="white" stroke="#334155" stroke-width="2" vector-effect="non-scaling-stroke"/>${shown.map(p=>{const item=itemById.get(p.placementId),productIndex=ids.indexOf(p.productId);return `<rect x="${p.x}" y="${p.y}" width="${p.length}" height="${p.width}" fill="${viewerBoxColor(productIndex,item?.shadeIndex??0,p.layerIndex)}" fill-opacity=".72" stroke="${viewerWireColor(productIndex)}" stroke-width="1.5" vector-effect="non-scaling-stroke"><title>${e(label(p.productId))} · ${e(p.orientation)} · ${e(p.length)} × ${e(p.width)} mm</title></rect>`;}).join('')}</svg>`;
+  const ids=[...new Set(createViewerModel(data.placements).ordered.map(p=>p.productId))];
+  const colors=['#2563eb','#7c3aed','#d97706','#db2777','#0284c7'];
+  const plan=`<svg class="layer-plan" viewBox="${minX-10} ${minY-10} ${maxX-minX+20} ${maxY-minY+20}" role="img" aria-label="Bovenaanzicht eerste laag"><rect x="0" y="0" width="${data.bounds.length}" height="${data.bounds.width}" fill="white" stroke="#334155" stroke-width="2" vector-effect="non-scaling-stroke"/>${shown.map(p=>`<rect x="${p.x}" y="${p.y}" width="${p.length}" height="${p.width}" fill="${colors[ids.indexOf(p.productId)%colors.length]}" fill-opacity=".3" stroke="#1e40af" vector-effect="non-scaling-stroke"><title>${e(label(p.productId))} · ${e(p.orientation)} · ${e(p.length)} × ${e(p.width)} mm</title></rect>`).join('')}</svg>`;
   const layerRows = levels.map(level=>{const placements=data.placements.filter(p=>p.layerIndex===level);const layerCounts=new Map<string,number>();for(const p of placements)layerCounts.set(p.productId,(layerCounts.get(p.productId)??0)+1);return [level+1,[...layerCounts].map(([id,n])=>`${n} × ${label(id)}`).join(' · '),[...new Set(placements.map(p=>p.orientation))].join(' / ')];});
   const invalid=data.validation.status==='invalid';
   return `<header><div><div class="eyebrow">Operator-infokaart · ${isPallet?'stapelen':'doos vullen'}</div><h1>${e(data.title)}</h1><div class="meta">Maten in millimeters · X = lengte · Y = breedte · Z = hoogte</div></div><button class="print-button" id="print-card" type="button">Afdrukken</button></header>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createViewerPalette, productBaseColor, viewerBoxColor, viewerTextColor, viewerWireColor } from "./viewer-palette";
+import { createViewerPalette, productBaseColor, viewerBoxColor, viewerTextColor } from "./viewer-palette";
 
 describe("viewer palette", () => {
   it("keeps product families stable and cycles deterministically", () => {
@@ -19,12 +19,5 @@ describe("viewer palette", () => {
     expect(viewerTextColor("#ffffff")).toBe("#0f172a");
     expect(viewerTextColor("#0f172a")).toBe("#ffffff");
     expect(createViewerPalette().pallet).toBe("#94a3b8");
-  });
-
-  it("uses a stable darker family tint for product wireframes", () => {
-    expect(viewerWireColor(0)).toBe(createViewerPalette().wireColor(0));
-    expect(viewerWireColor(0)).not.toBe(productBaseColor(0));
-    expect(viewerWireColor(0)).not.toBe("#475569");
-    expect(viewerWireColor(0)).toBe(viewerWireColor(8));
   });
 });

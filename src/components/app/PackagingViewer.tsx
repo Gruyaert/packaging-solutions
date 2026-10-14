@@ -29,7 +29,7 @@ export function PackagingViewer({ data }: { data: ViewerData }) {
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
       {!visible && <p className="p-4 text-xs text-muted-foreground">Viewer wordt geladen wanneer zichtbaar.</p>}
       {/* The imperative viewer exclusively owns this container's children. */}
-      <div ref={host} className="w-full min-w-0 max-w-full rounded-xl bg-background" />
+      <div ref={host} className="aspect-[4/3] min-h-48 w-full min-w-0 max-w-full overflow-hidden rounded-xl bg-background" />
     </section>
   );
 }
