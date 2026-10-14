@@ -70,14 +70,17 @@ function applyCombinedShapeFormatMapping(sheet: InspectedSheet, kind: MasterKind
   }
 }
 
+function numericValue(value: unknown) {
+  if (typeof value === "number") return value;
+  const match = String(value ?? "").trim().match(/\d+(?:[.,]\d+)?/);
+  return match ? Number(match[0].replace(",", ".")) : NaN;
+}
+
 function combinedFormatValues(row: InspectedSheet["rows"][number], column: number) {
   const cell = row.cells.find(candidate => candidate.column === column);
   if (!cell) return undefined;
-  const parsePart = (value: string) => {
-    const match = value.match(/\d+(?:[.,]\d+)?/);
-    return match ? Number(match[0].replace(",", ".")) : NaN;
-  };
-  const separated = cell.text.split(/\s*(?:x|×|\/|;|\||·)\s*/i).map(parsePart);
+  const parsePart = (value: string) => numericValue(value);
+  const separated = cell.text.split(/\s*(?:x|×|\*|\/|;|\||·|[-–—])\s*/i).map(parsePart);
   if (separated.length === 3 && separated.every(Number.isFinite)) return separated;
   const values = (cell.text.match(/\d+(?:[.,]\d+)?/g) ?? []).map(value => Number(value.replace(",", ".")));
   if (values.length === 3 && values.every(Number.isFinite)) return values;
@@ -128,7 +131,7 @@ function parseRows(kind: MasterKind, sheet: InspectedSheet, headerRow: number, m
       const combinedIndex = field === "format_a" ? 0 : field === "format_b" ? 1 : field === "format_h" ? 2 : -1;
       const numericRaw = combinedIndex >= 0 && combinedFormats ? combinedFormats[combinedIndex] : raw;
       if (numeric.has(field)) {
-        const value = numericRaw === null || numericRaw === undefined || numericRaw === "" ? (field === "cardboard" ? 0 : NaN) : typeof numericRaw === "number" ? numericRaw : Number(String(numericRaw).trim().replace(",", "."));
+        const value = numericRaw === null || numericRaw === undefined || numericRaw === "" ? (field === "cardboard" ? 0 : NaN) : numericValue(numericRaw);
         if (!Number.isFinite(value) || (field === "cardboard" ? value < 0 : value <= 0)) throw new Error(`${sources[kind].filename}: ongeldige ${field} op rij ${row.number}.`);
         item[field] = value;
       } else if (field === "active" || field === "blocked") {
