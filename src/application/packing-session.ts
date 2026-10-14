@@ -1,6 +1,6 @@
 import type { CustomSettings } from "@/domain/packing/custom-box";
 import type { PackingResponse } from "./packing-job";
-import type { Box, Product, Solution, Sorting, Spacing, Strategy } from "@/domain/packing/types";
+import type { Box, Product, SearchProfile, Solution, Sorting, Spacing, Strategy } from "@/domain/packing/types";
 
 export type PackingSessionResponse = Extract<PackingResponse, { result: unknown }>;
 
@@ -9,6 +9,7 @@ export interface PackingSessionState {
   products: (Product & { inputWeight: number; weightUnit: "g" | "kg" })[];
   source: string;
   strategy: Strategy;
+  profile: SearchProfile;
   sorting: Sorting;
   exact: boolean;
   spacing: Spacing;

@@ -18,16 +18,56 @@ export interface ValidationJSON {
   gravityCheck: { valid: boolean; unsupported: string[] };
   boundsCheck: { valid: boolean; outside: string[] };
 }
+export type SearchProfile = "maximum-fill" | "simple-practical";
+export interface PatternMetrics {
+  layerCount: number;
+  usedOrientations: number;
+  orientationComplexity: number;
+  repeatedLayerRatio: number;
+  gridRegularity: number;
+  verticalFill: number;
+  compactness: number;
+  simple: boolean;
+}
 export interface Solution {
   solutionId: string; box: Box; spacing: Spacing; placements: Placement[];
   validation: ValidationJSON; counts: Record<string, number>; utilization: number;
   air: number; transportEfficiency: number; weightKg: number; practicalScore: number;
-  metadata: { restPlacementIds: string[]; handlingScore: number; pattern: string };
+  metadata: { restPlacementIds: string[]; handlingScore: number; pattern: string; patternMetrics?: PatternMetrics; strategy?: string };
 }
 export type Strategy = "desired" | "fill";
 export type Sorting = "fill" | "practical";
-export interface SearchOptions { signal?: AbortSignal; maxAttempts?: number; maxPlacements?: number; maxWeightKg?: number; maxTotalLayers?: number }
-export interface SearchResult { solutions: Solution[]; attempts: number; truncated: boolean; warnings: string[] }
+export interface SearchDiagnostics {
+  beamWidth: number;
+  layerCandidateLimit: number;
+  statesExplored: number;
+  statesRetained: number;
+  layerHeights: number[];
+  strategies: string[];
+  orderings: string[];
+  validCandidates: number;
+  rejectedCandidates: number;
+  rejectionReasons: Record<string, number>;
+  profile: SearchProfile;
+}
+export interface SearchOptions {
+  signal?: AbortSignal;
+  maxAttempts?: number;
+  maxPlacements?: number;
+  maxWeightKg?: number;
+  maxTotalLayers?: number;
+  profile?: SearchProfile;
+  beamWidth?: number;
+  layerCandidateLimit?: number;
+}
+export interface SearchResult {
+  solutions: Solution[];
+  attempts: number;
+  truncated: boolean;
+  warnings: string[];
+  diagnostics?: SearchDiagnostics;
+  rejected?: { pattern: string; errors: string[] }[];
+}
 export const EPS = 1e-6;
 export const volume = (d: Dimensions) => d.length * d.width * d.height;
 export const outside = (box: Box): Dimensions => ({ length: box.length + 2 * box.cardboard, width: box.width + 2 * box.cardboard, height: box.height + 2 * box.cardboard });
@@ -52,4 +92,8 @@ export function assertInput(products: Product[], spacing: Spacing, boxes: Box[] 
   }
   if (!Object.values(spacing).every(n => Number.isFinite(n) && n >= 0)) throw new Error("Speling moet niet-negatief zijn.");
   for (const b of boxes) if (!b.boxId || ![b.length, b.width, b.height].every(n => Number.isFinite(n) && n > 0) || !Number.isFinite(b.cardboard) || b.cardboard < 0 || !Number.isFinite(volume(b)) || !Number.isFinite(volume(outside(b))) || volume(b) <= 0) throw new Error("Doos vereist berekenbare positieve interne/buitenmaten en niet-negatieve kartondikte.");
+}
+
+export function uniqueOrientations(product: Product): Orientation[] {
+  return [...new Set(product.rotations)];
 }

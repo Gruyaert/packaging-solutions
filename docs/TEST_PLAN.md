@@ -79,6 +79,14 @@ Browseracceptatie nog uit te voeren:
 
 Deze ronde: source/imports/routes/isolatie handmatig gecontroleerd. Typecheck, build, Vitest, lint en interactieve browseracceptatie niet uitgevoerd omdat daarvoor geen uitvoeringstool beschikbaar is. Eerdere 0.4-checks hieronder zijn historische resultaten, geen bewijs voor deze uitbreiding.
 
+## ZITE-engine 0.8 — nieuw testplan
+
+De nieuwe engine moet aanvullend deterministisch testen: zes toegelaten rotaties met deduplicatie, verschillende rotaties per stuk in `maximum-fill`, uniforme laaghoogtes, geen overlap/zweven, beam pruning en truncatie. Desired search moet partial results behouden en `exactFilter` mag de bronlijst niet muteren. `simple-practical` moet eenvoudige kandidaten selecteren op oriëntatiediversiteit, herhaalbare lagen, rasterregelmaat en compactheid; als geen eenvoudige kandidaat bestaat moet de diagnose dat melden.
+
+Multi-product maatwerk test dezelfde layer-beam engine en bewaart exacte counts, compacte werkelijk afgeleide doosmaten, `realityErrors` en rejected reasons. Single-product lineaire G03 blijft backward-compatible. Palletisatie test de nieuwe families `grid`, `strip`, `guillotine`, `maxrects` en `alternating`, inclusief overlap, volledige support, overhang en hoogte.
+
+De response mag maximaal 20 unieke resultaten per doos bevatten en diagnostics moeten beam width, states, laaghoogtes, strategieën, rejection reasons en truncatie melden. Testfixtures blijven synthetisch totdat een echte ZITE-versus-huidige-app-case beschikbaar is. Deze nieuwe tests zijn toegevoegd als contractdoel; interactieve browseracceptatie en Vitest-uitvoering moeten nog gebeuren.
+
 ## Historische 0.4-verificatie en acceptatie
 - Projectbrede TypeScriptcheck: uitgevoerd, geslaagd na correctie van de ExcelJS cell.col-conversie.
 - Database audit: alle zes tabellen RLS=true; anon SELECT=false, geen client DELETE; shapes/imports geen directe client INSERT/UPDATE, pallets INSERT-only; own-user policies en service-role grants aanwezig.

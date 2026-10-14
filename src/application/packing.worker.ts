@@ -5,9 +5,10 @@ const scope = self as unknown as { onmessage: ((event: MessageEvent<PackingReque
 scope.onmessage = ({ data }) => {
   try {
     const start = performance.now();
+    const options = { profile: data.profile, maxAttempts: 96, maxPlacements: 300, maxWeightKg: data.maxWeightKg, maxTotalLayers: data.maxTotalLayers };
     const result = data.mode === 'custom'
-      ? customBoxes(data.products, data.spacing, data.custom, { maxAttempts: 96, maxPlacements: 300 })
-      : searchPackaging(data.products, data.boxes, data.spacing, data.strategy, { maxAttempts: 96, maxPlacements: 300, maxWeightKg: data.maxWeightKg, maxTotalLayers: data.maxTotalLayers });
+      ? customBoxes(data.products, data.spacing, data.custom, options)
+      : searchPackaging(data.products, data.boxes, data.spacing, data.strategy, options);
     scope.postMessage({ result, elapsed: performance.now() - start });
   } catch (error) { scope.postMessage({ error: error instanceof Error ? error.message : 'Berekening mislukt.' }); }
 };

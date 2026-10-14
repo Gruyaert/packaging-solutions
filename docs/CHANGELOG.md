@@ -1,5 +1,13 @@
 # Changelog
 
+## ZITE-gebaseerde packing- en palletisatie-engine (0.8)
+
+De bestaande Verpakking zoeken-, Omdoos op maat- en Palletisatieflows gebruiken nu een ZITE-geïnspireerde laag-voor-laag beam search. De packing-engine combineert uniforme laaghoogtes, gededupliceerde rotaties, meerdere productorders en 2D MaxRects-achtige vrije rechthoeken met `area`, `short`, `long` en `bottom` strategieën. Gewenste aantallen behouden partial results; het exacte aantal blijft een aparte filter.
+
+Er zijn twee resultaatprofielen: maximale vulling (gemengde rotaties per stuk toegestaan) en eenvoudig/praktisch patroon (oriëntatie-eenvoud, laagherhaling, rasterregelmaat en compactheid). Resultaten bevatten patroonmetrics en technische search diagnostics. De bestaande maatwerk-workspace blijft behouden; single-product lineaire contracten blijven beschikbaar en multi-product maatwerk gebruikt de nieuwe layer-beam engine voor kandidaatdozen. Palletisatie rapporteert nu ook grid/strip/guillotine/MaxRects/alternating patroonfamilies.
+
+Geometrische validatie, support, bounds, maxima, gewicht en lagenlimieten blijven leidend. Geen materiaal-, draagkracht- of transportcertificering wordt beweerd. Production build en projectbrede TypeScriptcheck zijn na deze wijziging geslaagd; interactieve browser-/Vitestacceptatie blijft nog uit te voeren.
+
 ## Taakgerichte werkruimte en operator-infokaart (aanvulling op 0.7)
 
 Brede invoer/resultaatgrid, oplossingenkaarten naast viewer, compacte mobiele select en gekozen resultaat vóór invoer. PackingResults volledig aangesloten; oude SaveSolution/SolutionDetails/export-verwijzingen uit PackingWorkbench verwijderd zodat de gemelde SaveSolution-is-not-defined-refactorfout opgelost is. Kerngegevens/schema voorop, technische tabellen/JSON/diagnostiek en uitgebreide vieweropties standaard gesloten.
