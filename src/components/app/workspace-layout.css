@@ -1,24 +1,23 @@
 .packing-workbench { container: packing-workbench / inline-size; }
 .packing-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.25rem; }
-.packing-input-panel, .packing-result-panel { min-width: 0; }
-.packing-result-panel.has-results { order: -1; }
+.packing-input-panel, .packing-result-panel, .packing-results { min-width: 0; max-width: 100%; }
 .packing-results { container: packing-results / inline-size; }
+.packing-result-panel.has-results { order: -1; }
 .packing-result-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1rem; }
 .packing-result-cards { display: none; }
 .packing-result-choice { display: block; }
-.packing-auto-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: .75rem; }
-.product-field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 100px), 1fr)); gap: .75rem; }
-.dimension-guide { container: dimension-guide / inline-size; }
+.packing-auto-fields, .product-field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: .75rem; }
+.dimension-guide { container: dimension-guide / inline-size; max-width: 100%; overflow: hidden; }
 .dimension-guide-content { display: flex; flex-direction: column; gap: .75rem; }
 @container dimension-guide (min-width: 500px) {
   .dimension-guide-content { flex-direction: row; align-items: center; }
 }
-@container packing-workbench (min-width: 1100px) {
-  .packing-layout { grid-template-columns: minmax(300px, .38fr) minmax(0, 1fr); }
+@container packing-workbench (min-width: 860px) {
+  .packing-layout { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
   .packing-input-panel { max-height: calc(100vh - 220px); max-height: calc(100dvh - 220px); overflow-y: auto; padding-right: .5rem; }
   .packing-result-panel.has-results { order: 0; }
 }
-@container packing-results (min-width: 740px) {
+@container packing-results (min-width: 700px) {
   .packing-result-grid { grid-template-columns: minmax(180px, .35fr) minmax(0, 1fr); }
   .packing-result-cards { display: block; max-height: calc(100vh - 260px); max-height: calc(100dvh - 260px); overflow-y: auto; }
   .packing-result-choice { display: none; }

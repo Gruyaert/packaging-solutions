@@ -91,11 +91,25 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+
   * {
     @apply border-border;
+    min-width: 0;
   }
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }

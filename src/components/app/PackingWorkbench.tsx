@@ -73,9 +73,9 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
   }, [response, exact, resultProducts, linear, sorting]);
   const selected = ranked.find(s => s.solutionId === selectedId) ?? ranked[0];
   const context = records.definitions.find(d => d.id === (initial?.definition_id ?? definitionId));
-  return <section className="min-w-0 space-y-5"><div><h1 className="text-2xl font-semibold tracking-tight">{mode === "search" ? "Verpakking zoeken" : "Omdoos op maat"}</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">{context ? `Context: ${context.name} · ${context.scope} · ${context.packaging_mode}. ` : ""}{initial && "Bewerken maakt een nieuwe variant; het origineel blijft ongewijzigd. "}Vul je producten in, kies de doosvoorwaarden en vergelijk de berekende oplossingen.</p></div>
-    <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(300px,0.38fr)_minmax(0,1fr)]">
-    <div className="min-w-0 space-y-3 xl:max-h-[calc(100dvh-220px)] xl:overflow-y-auto xl:pr-2">
+  return <section className="packing-workbench min-w-0 space-y-5"><div><h1 className="text-2xl font-semibold tracking-tight">{mode === "search" ? "Verpakking zoeken" : "Omdoos op maat"}</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{context ? `Context: ${context.name} · ${context.scope} · ${context.packaging_mode}. ` : ""}{initial && "Bewerken maakt een nieuwe variant; het origineel blijft ongewijzigd. "}Vul je producten in, kies de doosvoorwaarden en vergelijk de berekende oplossingen.</p></div>
+    <div className="packing-layout min-w-0 items-start gap-5">
+    <div className="packing-input-panel min-w-0 space-y-3">
     <form onSubmit={e => { e.preventDefault(); calculate(); }} className="space-y-6"><fieldset disabled={busy} className="space-y-6">
       <ProductInputs products={products} onChange={setProducts} />
       <details className="rounded-xl border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Hulp bij de doosmaten</summary><div className="mt-3"><DimensionGuide kind="box" /></div></details>
@@ -87,7 +87,7 @@ export function PackingWorkbench({ mode, initial, definitionId, onSaved, onPalle
     </fieldset><div className="flex flex-wrap gap-3"><Button className="gap-2 rounded-xl" disabled={busy}>{busy && <Loader2 className="size-4 animate-spin" />}{busy ? "Zoeken…" : mode === "search" ? "Verpakkingen zoeken" : "Maatwerkdozen berekenen"}</Button>{busy && <Button type="button" variant="outline" className="rounded-xl" onClick={() => { workerRef.current?.terminate(); workerRef.current = undefined; setBusy(false); setError("Zoekopdracht geannuleerd."); }}>Annuleren</Button>}</div></form>
     {error && <p role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
     </div>
-    <div className={`min-w-0 ${response ? 'order-first xl:order-last' : ''}`}>
+    <div className={`packing-result-panel min-w-0 ${response ? 'has-results' : ''}`}>
       {response ? <PackingResults result={response.result} ranked={ranked} selected={selected} products={resultProducts} mode={resultMode} definitionId={initial?.definition_id ?? definitionId} basedOn={initial?.id} sorting={sorting} exact={exact} linear={linear} onSorting={setSorting} onExact={setExact} onSelect={setSelectedId} onSaved={onSaved} onPalletize={onPalletize} /> : <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed bg-card p-8 text-center"><h2 className="text-lg font-semibold">Hier verschijnt je vulschema</h2><p className="mt-2 max-w-sm text-sm text-muted-foreground">Vul je producten en doosvoorwaarden in en start de berekening. Daarna kies je een oplossing naast de visualisatie.</p></div>}
     </div>
     </div>
