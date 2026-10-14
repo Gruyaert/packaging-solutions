@@ -8,10 +8,11 @@ const product = dimension.extend({ productId: z.string().min(1), reference: z.st
 const placement = dimension.extend({ placementId: z.string().min(1), productId: z.string().min(1), x: z.number().finite(), y: z.number().finite(), z: z.number().finite(), orientation: z.enum(ORIENTATIONS), layerIndex: z.number().int().nonnegative() });
 const editor = z.object({ sourceSolutionId: z.string().min(1), baselineCounts: z.record(z.number().int().nonnegative()), palletSettings: z.object({ palletLength: positive, palletWidth: positive, palletHeight: nonnegative, maxTotalHeight: positive, overhangLengthPerSide: nonnegative, overhangWidthPerSide: nonnegative }), operations: z.array(z.object({ operationId: z.string().uuid(), solutionId: z.string().min(1), timestamp: z.string().datetime(), operationType: z.enum(OPERATION_TYPES), parametersJSON: z.record(z.unknown()), beforePlacementJSON: z.array(placement).max(300), afterPlacementJSON: z.array(placement).max(300), user: z.string().min(1), note: z.string() })).min(1).max(202) });
 const schema = z.object({ contractVersion: z.literal("0.3"), products: z.array(product).min(1).max(5), editor: editor.optional(), solution: z.object({ solutionId: z.string().min(1), box: dimension.extend({ boxId: z.string().min(1), reference: z.string(), cardboard: nonnegative }), spacing: z.object({ length: nonnegative, width: nonnegative, height: nonnegative }), placements: z.array(placement).min(1).max(300) }) });
+type ParsedSnapshot = { contractVersion: "0.3"; products: Product[]; solution: Pick<Solution, "solutionId" | "box" | "spacing" | "placements">; editor?: EditorAudit };
 export function parseSolutionSnapshot(text: string): { products: Product[]; solution: Solution; editor?: EditorAudit } {
   const result = schema.safeParse(JSON.parse(text));
   if (!result.success) throw new Error("Ongeldig solutionbestand; verwacht een volledig snapshot met contractVersion 0.3 en geldige auditvelden.");
-  const { products, solution, editor: audit } = result.data;
+  const { products, solution, editor: audit } = result.data as unknown as ParsedSnapshot;
   assertInput(products, solution.spacing, [solution.box]);
   let rebuilt = makeSolution(solution.solutionId, products, solution.box, solution.spacing, solution.placements, audit ? "Edited solution" : "ingelezen snapshot");
   if (audit) {

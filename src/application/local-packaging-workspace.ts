@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { PackagingRecords, Snapshot, SolutionRecord } from "@/infrastructure/packaging-records";
+import type { CartonRecord, DefinitionRecord, PackagingRecords, PalletRecord, ShapeRecord, Snapshot, SolutionRecord } from "@/infrastructure/packaging-records";
 import { parseSolutionSnapshot } from "@/infrastructure/solution-snapshot";
-import { palletize, type PalletSource } from "@/domain/packing/pallet";
+import { palletize, type PalletSettings, type PalletSource } from "@/domain/packing/pallet";
 
 const text = z.string().trim().min(1, "Een verplicht tekstveld ontbreekt.");
 const positive = z.number().finite().positive("Maten moeten positief zijn.");
@@ -23,20 +23,20 @@ export function createLocalPackagingWorkspace() {
     if (kind === "cartons") {
       const old = records.cartons.find(c => c.id === id);
       if (id && !old) throw new Error("Omdoos niet gevonden in de testwerkruimte.");
-      const parsed = cartonSchema.parse({ ...old, ...values });
+      const parsed = cartonSchema.parse({ ...old, ...values }) as Omit<CartonRecord, "id" | "user_id" | "modified_on">;
       if (records.cartons.some(c => c.id !== recordId && c.reference === parsed.reference)) throw new Error("Deze omdoosreferentie bestaat al.");
-      const row = { ...parsed, ...base };
+      const row: CartonRecord = { ...parsed, ...base };
       records = { ...records, cartons: old ? records.cartons.map(c => c.id === id ? row : c) : [...records.cartons, row] };
     } else if (kind === "definitions") {
       const old = records.definitions.find(d => d.id === id);
       if (id && !old) throw new Error("Definitie niet gevonden in de testwerkruimte.");
-      const parsed = definitionSchema.parse({ ...old, ...values });
+      const parsed = definitionSchema.parse({ ...old, ...values }) as Omit<DefinitionRecord, "id" | "user_id" | "modified_on">;
       if (parsed.scope === "PRODUCT" && !parsed.product_number.trim()) throw new Error("Een productnummer is verplicht.");
       if (parsed.scope === "SHAPE" && !records.shapes.some(s => s.shape_id === parsed.shape_id && s.variant_id === parsed.variant_id)) throw new Error("Kies een bestaande shape-masterkey.");
       if (old && records.solutions.some(s => s.definition_id === id) && definitionKeys.some(key => old[key] !== parsed[key])) throw new Error("Een definitie met solutions kan niet van context of modus veranderen.");
       if (records.definitions.some(d => d.id !== recordId && definitionKeys.every(key => d[key] === parsed[key]))) throw new Error("Er bestaat al een definitie voor deze context en modus.");
       if (parsed.current_solution_id && !records.solutions.some(s => s.id === parsed.current_solution_id && s.definition_id === recordId && s.packaging_mode === parsed.packaging_mode && s.status !== "archived")) throw new Error("De actieve solution moet tot deze definitie behoren.");
-      const row = { ...parsed, ...base };
+      const row: DefinitionRecord = { ...parsed, ...base };
       records = { ...records, definitions: old ? records.definitions.map(d => d.id === id ? row : d) : [...records.definitions, row] };
     } else if (kind === "solutions") {
       const old = records.solutions.find(s => s.id === id);
@@ -49,7 +49,7 @@ export function createLocalPackagingWorkspace() {
         const changedMetadata = updated.name !== old.name || JSON.stringify(updated.metadata) !== JSON.stringify(old.metadata);
         records = { ...records, solutions: records.solutions.map(s => s.id === id ? updated : s), operations: changedMetadata ? [...records.operations, { id: crypto.randomUUID(), user_id: owner, solution_id: recordId, timestamp: now, operation_type: "EDIT_METADATA", parameters_json: { beforeName: old.name, afterName: updated.name, beforeMetadata: old.metadata, afterMetadata: updated.metadata }, before_placement_json: [], after_placement_json: [], actor: owner, note: "" }] : records.operations };
       } else {
-        const parsed = solutionSchema.parse(values);
+        const parsed = solutionSchema.parse(values) as Omit<SolutionRecord, "id" | "user_id" | "modified_on" | "created_on" | "snapshot"> & { snapshot: unknown };
         const snapshot: Snapshot = { contractVersion: "0.3", ...parseSolutionSnapshot(JSON.stringify(parsed.snapshot)) };
         const definition = records.definitions.find(d => d.id === parsed.definition_id);
         if (parsed.definition_id && (!definition || definition.packaging_mode !== parsed.packaging_mode)) throw new Error("Definitie en solution moeten dezelfde modus hebben.");
@@ -70,13 +70,14 @@ export function createLocalPackagingWorkspace() {
       }
     } else {
       if (id) throw new Error("Opgeslagen palletresultaten zijn onveranderlijk.");
-      const name = text.parse(values.name), settings = palletSettings.parse(values.settings);
+      const name = text.parse(values.name), settings = palletSettings.parse(values.settings) as PalletSettings;
       const source = structuredClone(values.source) as PalletSource;
       const pattern = z.object({ pattern: text }).parse(values.result).pattern;
       // Rebuild the selected pattern from its inputs instead of trusting stored metrics.
       const result = palletize(source, settings).find(candidate => candidate.pattern === pattern);
       if (!result) throw new Error("Dit palletpatroon past niet bij de bron en instellingen.");
-      records = { ...records, pallets: [...records.pallets, { id: recordId, user_id: owner, name, source, settings, result, created_on: now }] };
+      const row: PalletRecord = { id: recordId, user_id: owner, name, source, settings, result, created_on: now };
+      records = { ...records, pallets: [...records.pallets, row] };
     }
     return { id: recordId };
   }
@@ -84,13 +85,13 @@ export function createLocalPackagingWorkspace() {
     if (!rows.length || rows.length > 2000) throw new Error("Een import moet 1 tot 2000 gegevensrijen bevatten.");
     const now = new Date().toISOString();
     if (kind === "cartons") {
-      const parsed = rows.map(row => cartonSchema.parse(row));
+      const parsed = rows.map(row => cartonSchema.parse(row) as Omit<CartonRecord, "id" | "user_id" | "modified_on">);
       if (new Set(parsed.map(row => row.reference)).size !== parsed.length) throw new Error("Dubbele omdoosreferenties in de import.");
       const next = new Map(records.cartons.map(row => [row.reference, row]));
       for (const row of parsed) next.set(row.reference, { ...row, id: next.get(row.reference)?.id ?? crypto.randomUUID(), user_id: owner, modified_on: now });
       records = { ...records, cartons: [...next.values()] };
     } else {
-      const parsed = rows.map(row => shapeSchema.parse(row));
+      const parsed = rows.map(row => shapeSchema.parse(row) as Omit<ShapeRecord, "id" | "user_id" | "modified_on">);
       const key = (row: { shape_id: string; variant_id: string }) => JSON.stringify([row.shape_id, row.variant_id]);
       if (new Set(parsed.map(key)).size !== parsed.length) throw new Error("Dubbele shape-masterkeys in de import.");
       const next = new Map(records.shapes.map(row => [key(row), row]));
